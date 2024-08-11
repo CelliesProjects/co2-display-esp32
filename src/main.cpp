@@ -5,6 +5,8 @@
 
 #include <ScioSense_ENS160.h>
 #include <Adafruit_AHTX0.h>
+#include <Adafruit_SHT31.h>
+
 
 #include <Arduino_GFX_Library.h> // https://github.com/moononournation/Arduino_GFX/
 #include <TouchLib.h>            // https://github.com/mmMicky/TouchLib
@@ -134,8 +136,8 @@ void showAirQuality()
 void setup()
 {
     Serial.begin(115200);
-    // mount sd card
 
+    // mount sd card
     SPI.begin(48, 41, 47);
     if (!SD.begin(42))
         Serial.println("SD card mount failed");
@@ -143,7 +145,6 @@ void setup()
         Serial.println("SD card mounted");
 
     // display
-    //ledcSetup(0, 1220, 14);
     ledcSetup(0, 1220, SOC_LEDC_TIMER_BIT_WIDE_NUM);
     ledcAttachPin(GFX_BL, 0);
     ledcWrite(0, (1ul << SOC_LEDC_TIMER_BIT_WIDE_NUM - 2));
@@ -167,10 +168,7 @@ void setup()
     // aht sensor
     bool aresult = aht.begin(&I2Csensor);
     Serial.printf("aht sensor is %s\n", aresult ? "found" : "absent");
-    updateTemp();
-
     delay(100);
-
     // co2 sensor
     bool mresult = ens160.begin(false);
     Serial.printf("environment sensor is %s\n", mresult ? "found" : "absent");
