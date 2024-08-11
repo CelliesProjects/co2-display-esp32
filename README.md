@@ -1,16 +1,16 @@
  # BOARD: ESP32-4848S040
 
-| **I2C**|  |
-|-------|---|
-| SDA| 19 |
-| SCL | 45 |
+| I2C| PIN |
+|-------|---|  
+| SDA| 19 |  
+| SCL | 45 |  
 
-| **TOUCH PANEL I2C ID** |  
-|--------------| 
-| 0x5D     |
+| I2C | TOUCH|   
+|--------------|--|  
+|  ID | 0x5D   |  
 
 
-| **SPI** | |
+| **SPI** |PIN |
 |-------|---|
 | SCL | 48 |
 | MOSI | 47 |
@@ -18,15 +18,21 @@
 
 |-------|---|
 |-------|---|
-| BACK_LIGHT | 38 |
+| BACKLIGHT | 38 |
 | CS CDCARD | 42 |
 
-The GPIO that control the relays are the only free GPIO on this panel.
+The GPIO that control the relays are on the backside of the panel (with the relays removed)
 |RELAY|PIN|
 |-------|---|
-|1| 40
-|2| 2
-|3| 1
+|1| 40 |
+|2| 2 |
+|3| 1 |
+
+Also exposed on the backside are pins marked TXD and RXD
+|MARK| PIN|
+|-----|-----|
+| TX  | 43  |
+| RX  | 44  |
 
 More info:
 
@@ -37,3 +43,5 @@ https://github.com/arendst/Tasmota/discussions/20527
 https://michiel.vanderwulp.be/domotica/Modules/SmartDisplay-ESP32-S3-4.0inch/software.html
 
 https://github.com/moononournation/Arduino_GFX/issues/465 <-------WORKING!
+
+https://lastminuteengineers.com/sht31-temperature-humidity-sensor-arduino-tutorial/
