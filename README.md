@@ -2,34 +2,34 @@
 
 https://github.com/CelliesProjects/co2-display-esp32 
 
-## I2C pins
+## I2C GPIOs
 
-| I2C| PIN |
+|  | GPIO |
 |:--:|:--:|
 |SDA|19|  
 |SCL|45|  
 
-Touchpanel is a I2C device
+Touchpanel is a gt911 I2C device
 
-|TOUCH|ID|
+|GT911|ID|
 |:--:|:--:|
 |ID |0x5D|  
 
-## SPI pins
+## SPI GPIOs
 
-| SPI |PIN |
+|   |GPIO |
 |:--:|:--:|
 |SCL|48|
 |MOSI|47|
 |MISO|41|
 
-The sdcard is an SPI device.
-|SDCARD|PIN|
+The sdcard is SPI.
+| |GPIO|
 |:--:|:--:|
 |CS|42|
 
-The display is connected through SPI -no MISO pin- and a lot of pins for the actual pixel data.
-|DISPLAY|PIN|
+The display is connected through SPI -no MISO GPIO- and a lot of GPIOs for the actual pixel data.
+|st7701s|GPIO|
 |:--:|:--:|
 |BACKLIGHT|38|
 |CS|39|
@@ -58,28 +58,26 @@ The display is connected through SPI -no MISO pin- and a lot of pins for the act
 |
 
 The GPIO that control the relays are on the backside of the panel (with the relays removed)
-|RELAY|PIN|
+|RELAY|GPIO|
 |:--:|:--:|
 |1| 40 |
 |2| 2 |
 |3| 1 |
 
-Also exposed on the backside are pins marked TXD and RXD.
-|MARK| PIN|
+Also exposed on the backside are GPIOs marked TXD and RXD.
+|MARK| GPIO|
 |:--:|:--:|
 | TX  | 43  |
 | RX  | 44  |
 
-A NS4168 dac is present on the board, but is not connected.<br>
-Three zero ohm resistors are missing on the board.<br>
-These resistors -if installed- connect the esp32 to the dac.<br>
-Check to see if it is safe to solder these connections closed.
+A NS4168 dac is present on the board, but is not connected because three zero ohm bridges are not on the board.<br>
+These bridges connect the `LRCLK`, `BCLK` and `SDATA` to the GPIO<br>
+But there is a GPIO conflict here: `GPIO4` is used by the tft display as `B0` and also as `SDATA` for the NS4168<br>
+I dont know if there is a way to share the GPIOs between the tft and dac
 
-There is a pin conflict: `GPIO4` is used by the tft display as `B0` and also as `SDATA` for the NS4168<br>
-
-| NS4168 | PIN |
+| NS4168 | GPIO |
 |:--:|:--:|
-|CTRL | ? |
+|CTRL | NC? |
 |LRCLK | 36 |
 |BCLK | 23 |
 |SDATA | 4 |
