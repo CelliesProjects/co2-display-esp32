@@ -67,12 +67,12 @@ The GPIO that control the relays are on the backside of the panel (with the rela
 Also exposed on the backside are GPIOs marked TXD and RXD.
 |MARK| GPIO|
 |:--:|:--:|
-| TX  | 43  |
-| RX  | 44  |
+|TXD|43|
+|RXD|44|
 
-A NS4168 dac is present on the board, but is not connected because three zero ohm bridges are not on the board.<br>
+A NS4168 dac is present on the board, but is not connected because of three zero ohm bridges missing on the board.<br>
 These bridges connect the `LRCLK`, `BCLK` and `SDATA` to the GPIO<br>
-But there is a GPIO conflict here: `GPIO4` is used by the tft display as `B0` and also as `SDATA` for the NS4168<br>
+But there is a GPIO conflict here: `GPIO4` is used by the tft display as `B0` -pixeldata- and also as `SDATA` -sample data- by the NS4168<br>
 I dont know if there is a way to share the GPIOs between the tft and dac
 
 | NS4168 | GPIO |
@@ -83,6 +83,8 @@ I dont know if there is a way to share the GPIOs between the tft and dac
 |SDATA | 4 |
 
 More info:
+
+https://github.com/esp-arduino-libs/ESP32_Display_Panel/blob/master/docs/Board_Instructions.md#shenzhen-jingcai-intelligent
 
 https://homeding.github.io/boards/esp32s3/panel-4848S040.htm
 
