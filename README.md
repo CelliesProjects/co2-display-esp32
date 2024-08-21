@@ -2,6 +2,14 @@
 
 https://github.com/CelliesProjects/co2-display-esp32 
 
+## Project status
+Waiting for the delivery of `SHT31` temp & humidity sensor and `SenseAir S8 C02 sensor` from ebay.
+
+Estimated delivery: 
+-  `SHT31` sept 25 
+-  `SenseAir S8` Oct 3
+
+
 ## I2C GPIOs
 
 |  | GPIO |
