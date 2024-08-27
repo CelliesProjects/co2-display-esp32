@@ -3,15 +3,17 @@
 #include <SD.h>
 #include <FS.h>
 
-#include <ScioSense_ENS160.h>
-#include <Adafruit_AHTX0.h>
+//#include <ScioSense_ENS160.h>
+//#include <Adafruit_AHTX0.h>
 #include <Adafruit_SHT31.h>
-
+#include <s8_uart.h>
 
 #include <Arduino_GFX_Library.h> // https://github.com/moononournation/Arduino_GFX/
-#include <TouchLib.h>            // https://github.com/mmMicky/TouchLib
 
 // touch stuff
+#define TOUCH_MODULES_GT911
+#include <TouchLib.h>            // https://github.com/mmMicky/TouchLib
+
 #define PIN_TOUCH_SCL 45
 #define PIN_TOUCH_SDA 19
 #define PIN_TOUCH_INT 1
@@ -24,12 +26,11 @@ TouchLib touch(Wire, PIN_TOUCH_SDA, PIN_TOUCH_SCL, GT911_SLAVE_ADDRESS1);
 #define PIN_SENSOR_SDA 2
 
 //  because Wire is only internally connected to the touchpad
-//  the ens160 sensor has to be on Wire1 and routed
+//  the sht31 sensor has to be on Wire1 and routed
 //  through the exposed GPIOs on the back of the device
 TwoWire I2Csensor = TwoWire(1);
 
-ScioSense_ENS160 ens160(&I2Csensor, ENS160_I2CADDR_1);
-Adafruit_AHTX0 aht;
+Adafruit_SHT31 sht31(&I2Csensor);
 
 // display stuff
 #define GFX_BL 38
@@ -60,18 +61,27 @@ void printHelloWorld()
     gfx->println("Hello World!");
 }
 
-void printAirQuality()
+void updateTempHumidity()
 {
-    // Give values to Air Quality Sensor.
-    ens160.set_envdata210(tempC, humidity);
-    ens160.measure(false);
-    ens160.measureRaw(false);
-    gfx->setCursor(10, 10);
-    gfx->setTextColor(0xffff, 0x0);
-    gfx->setTextSize(6 /* x scale */, 8 /* y scale */, 1 /* pixel_margin */);
-    gfx->printf("TVOC: %06i", ens160.getTVOC());
-    gfx->setCursor(10, 100);
-    gfx->printf("CO2: %06i", ens160.geteCO2());
+    const float t = sht31.readTemperature();
+    const float h = sht31.readHumidity();
+
+    if (!isnan(t))
+    {
+        Serial.print("Temp *C = ");
+        Serial.print(t);
+        Serial.print("\t\t");
+    }
+    else
+        Serial.println("Failed to update temperature");
+
+    if (!isnan(h))
+    {
+        Serial.print("Hum. % = ");
+        Serial.println(h);
+    }
+    else
+        Serial.println("Failed to update humidity");
 }
 
 void drawCurrentTouchpoints()
@@ -89,48 +99,8 @@ void drawCurrentTouchpoints()
     }
 }
 
-void updateTemp()
-{
-    sensors_event_t humidity1, temp; // Tim had to change to humidity1
-    aht.getEvent(&humidity1, &temp); // populate temp and humidity objects with fresh data
-    tempC = (temp.temperature);
-    tempF = (temp.temperature) * 1.8 + 32;
-    humidity = (humidity1.relative_humidity);
-    /*
-    Serial.print("Temperature: ");
-    Serial.print(tempC);
-    Serial.println(" degrees C");
-    Serial.print("Temperature: ");
-    Serial.print(tempF);
-    Serial.println(" degrees F");
-    Serial.print("Humidity: ");
-    Serial.print(humidity);
-    Serial.println("% rH");
-    */
-}
-
 void showAirQuality()
 {
-    if (ens160.available())
-    {
-        // Give values to Air Quality Sensor.
-        ens160.set_envdata210(tempC, humidity);
-        ens160.measure(false);
-        ens160.measureRaw(false);
-        /*
-                Serial.print("AQI: ");
-                Serial.print(ens160.getAQI());
-                Serial.print("\t");
-
-                Serial.print("TVOC: ");
-                Serial.print(ens160.getTVOC());
-                Serial.print("ppb\t");
-
-                Serial.print("eCO2: ");
-                Serial.print(ens160.geteCO2());
-                Serial.println("ppm\t");
-                */
-    }
 }
 
 void setup()
@@ -144,11 +114,12 @@ void setup()
     else
         Serial.println("SD card mounted");
 
-    // display
+    // display backlight
     ledcSetup(0, 1220, SOC_LEDC_TIMER_BIT_WIDE_NUM);
     ledcAttachPin(GFX_BL, 0);
     ledcWrite(0, (1ul << SOC_LEDC_TIMER_BIT_WIDE_NUM - 2));
 
+    // display
     gfx->begin(16000000);
     gfx->setRotation(0);
     gfx->fillScreen(RED);
@@ -165,14 +136,10 @@ void setup()
     // set second I2C interface pins
     I2Csensor.setPins(PIN_SENSOR_SDA, PIN_SENSOR_SCL);
 
-    // aht sensor
-    bool aresult = aht.begin(&I2Csensor);
-    Serial.printf("aht sensor is %s\n", aresult ? "found" : "absent");
-    delay(100);
-    // co2 sensor
-    bool mresult = ens160.begin(false);
-    Serial.printf("environment sensor is %s\n", mresult ? "found" : "absent");
-    ens160.setMode(ENS160_OPMODE_STD);
+    bool result = sht31.begin(SHT31_DEFAULT_ADDR);
+    Serial.printf("sht31 sensor is %s\n", result ? "found" : "absent");
+
+    // start SenseAir S8 sensor on TXD 43 and RXD 44
 }
 
 void loop()
@@ -182,8 +149,7 @@ void loop()
     drawCurrentTouchpoints();
     if (time(NULL) != updateTimer)
     {
-        updateTemp();
-        printAirQuality();
+        updateTempHumidity();
         updateTimer = time(NULL);
     }
     delay(5);
