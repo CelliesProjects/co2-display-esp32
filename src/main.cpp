@@ -2,9 +2,8 @@
 #include <Wire.h>
 #include <SD.h>
 #include <FS.h>
+#include <driver/uart.h>
 
-//#include <ScioSense_ENS160.h>
-//#include <Adafruit_AHTX0.h>
 #include <Adafruit_SHT31.h>
 #include <s8_uart.h>
 
@@ -12,7 +11,7 @@
 
 // touch stuff
 #define TOUCH_MODULES_GT911
-#include <TouchLib.h>            // https://github.com/mmMicky/TouchLib
+#include <TouchLib.h> // https://github.com/mmMicky/TouchLib
 
 #define PIN_TOUCH_SCL 45
 #define PIN_TOUCH_SDA 19
@@ -31,6 +30,13 @@ TouchLib touch(Wire, PIN_TOUCH_SDA, PIN_TOUCH_SCL, GT911_SLAVE_ADDRESS1);
 TwoWire I2Csensor = TwoWire(1);
 
 Adafruit_SHT31 sht31(&I2Csensor);
+
+// co2 sensor is a serial device 9600-8-n-1
+#define PIN_S8_RXD 43
+#define PIN_S8_TXD 44
+
+HardwareSerial S8_serial(2);
+S8_UART *sensor_S8;
 
 // display stuff
 #define GFX_BL 38
@@ -61,29 +67,6 @@ void printHelloWorld()
     gfx->println("Hello World!");
 }
 
-void updateTempHumidity()
-{
-    const float t = sht31.readTemperature();
-    const float h = sht31.readHumidity();
-
-    if (!isnan(t))
-    {
-        Serial.print("Temp *C = ");
-        Serial.print(t);
-        Serial.print("\t\t");
-    }
-    else
-        Serial.println("Failed to update temperature");
-
-    if (!isnan(h))
-    {
-        Serial.print("Hum. % = ");
-        Serial.println(h);
-    }
-    else
-        Serial.println("Failed to update humidity");
-}
-
 void drawCurrentTouchpoints()
 {
     if (touch.read())
@@ -99,13 +82,10 @@ void drawCurrentTouchpoints()
     }
 }
 
-void showAirQuality()
-{
-}
-
 void setup()
 {
     Serial.begin(115200);
+    // Serial.setDebugOutput(true);
 
     // mount sd card
     SPI.begin(48, 41, 47);
@@ -126,6 +106,8 @@ void setup()
     gfx->print("Hello world!");
 
     // touch panel
+    Serial.println("Starting touch panel");
+
     pinMode(PIN_TOUCH_RES, OUTPUT);
     digitalWrite(PIN_TOUCH_RES, 0);
     delay(200);
@@ -133,24 +115,80 @@ void setup()
     delay(200);
     touch.init();
 
+    Serial.println("Setting Second I2C pins");
+
     // set second I2C interface pins
     I2Csensor.setPins(PIN_SENSOR_SDA, PIN_SENSOR_SCL);
+
+    Serial.println("Starting sht31");
 
     bool result = sht31.begin(SHT31_DEFAULT_ADDR);
     Serial.printf("sht31 sensor is %s\n", result ? "found" : "absent");
 
+    Serial.flush();
+
     // start SenseAir S8 sensor on TXD 43 and RXD 44
+    S8_serial.setPins(PIN_S8_RXD, PIN_S8_TXD);
+    S8_serial.begin(S8_BAUDRATE);
+    sensor_S8 = new S8_UART(S8_serial);
+
+    Serial.println("we have a sensor");
+
+    S8_sensor sensor;
+    sensor.co2 = sensor_S8->get_co2();
+    Serial.print("CO2 value = ");
+    Serial.print(sensor.co2);
+    Serial.println(" ppm");
+
+    Serial.println("setup done");
+}
+
+void updateCO2()
+{
+    S8_sensor sensor;
+    sensor.co2 = sensor_S8->get_co2();
+    gfx->setCursor(50, 100);
+    gfx->setTextColor(WHITE, BLACK);
+    gfx->setTextSize(5 /* x scale */, 5 /* y scale */, 1 /* pixel_margin */);
+    gfx->printf("CO2 % 5i ppm", sensor.co2);
+}
+
+void updateTempHumidity()
+{
+    const float t = sht31.readTemperature();
+    const float h = sht31.readHumidity();
+
+    if (!isnan(t))
+    {
+        gfx->setCursor(50, 150);
+        gfx->setTextColor(WHITE, BLACK);
+        gfx->setTextSize(5 /* x scale */, 5 /* y scale */, 1 /* pixel_margin */);
+        gfx->printf("T % 3.1f C", t);
+    }
+    if (!isnan(h))
+    {
+        gfx->setCursor(50, 200);
+        gfx->setTextColor(WHITE, BLACK);
+        gfx->setTextSize(5 /* x scale */, 5 /* y scale */, 1 /* pixel_margin */);
+        gfx->printf("H % 3.1f%%%", h);
+    }
 }
 
 void loop()
 {
-    static auto updateTimer = time(NULL);
+    static auto tempTimer = 0;
+    static auto co2Timer = 0;
 
     drawCurrentTouchpoints();
-    if (time(NULL) != updateTimer)
+    if (time(NULL) != tempTimer)
     {
         updateTempHumidity();
-        updateTimer = time(NULL);
+        tempTimer = time(NULL);
+    }
+    if (time(NULL) != co2Timer)
+    {
+        updateCO2();
+        co2Timer = time(NULL);
     }
     delay(5);
 }
