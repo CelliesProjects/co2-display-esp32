@@ -103,3 +103,7 @@ https://michiel.vanderwulp.be/domotica/Modules/SmartDisplay-ESP32-S3-4.0inch/sof
 https://github.com/moononournation/Arduino_GFX/issues/465 <-------WORKING!
 
 https://lastminuteengineers.com/sht31-temperature-humidity-sensor-arduino-tutorial/
+
+https://thingpulse.com/usb-settings-for-logging-with-the-esp32-s3-in-platformio/
+
+https://docs.espressif.com/projects/arduino-esp32/en/latest/troubleshooting.html
