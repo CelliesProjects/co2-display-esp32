@@ -90,7 +90,7 @@ void setup()
     // mount sd card
     SPI.begin(48, 41, 47);
     if (!SD.begin(42))
-        Serial.println("SD card mount failed");
+        Serial.println("SD card not found");
     else
         Serial.println("SD card mounted");
 
