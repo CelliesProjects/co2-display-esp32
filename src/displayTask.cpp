@@ -8,18 +8,6 @@ void printHelloWorld()
     display.println("Hello World!");
 }
 
-void drawCurrentTouchpoints()
-{
-}
-
-void updateCO2()
-{
-}
-
-void updateTempHumidity()
-{
-}
-
 void displayTask(void *parameter)
 {
     display.init();
@@ -37,7 +25,7 @@ void displayTask(void *parameter)
             case displayMessage::SYSTEM_MESSAGE:
             {
                 display.setCursor(0, 0);
-                display.setTextColor(0xFFFFFF, 0x0);
+                display.setTextColor(TFT_BLACK, TFT_WHITE);
                 display.setTextSize(2 /* x scale */, 5 /* y scale */);
                 display.println(msg.str);
                 break;
@@ -46,7 +34,7 @@ void displayTask(void *parameter)
             case displayMessage::CO2_LEVEL:
             {
                 display.setCursor(50, 100);
-                display.setTextColor(0xFFFFFF, 0x0);
+                display.setTextColor(TFT_BLACK, TFT_WHITE);
                 display.setTextSize(2 /* x scale */, 5 /* y scale */);
                 display.printf("CO2 %06i ppm", msg.value1);
                 break;

@@ -1,4 +1,5 @@
 #ifndef _DISPLAY_MESSAGE_STRUCT_
+#define _DISPLAY_MESSAGE_STRUCT_
 
 struct displayMessage
 {
