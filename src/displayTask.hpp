@@ -2,13 +2,6 @@
 #define DISPLAY_TASK
 
 #include <Arduino.h>
-#include <Wire.h>
-
-#define PIN_TOUCH_SCL 45
-#define PIN_TOUCH_SDA 19
-#define PIN_TOUCH_INT 1
-#define PIN_TOUCH_RES 2
-#define GFX_BL 38
 
 #include "displayMessageStruct.hpp"
 
@@ -17,8 +10,9 @@
 
 static LGFX display;
 
+QueueHandle_t displayQueue = nullptr;
+
 void displayTask(void *parameter);
 
-QueueHandle_t displayQueue = nullptr;
 
 #endif

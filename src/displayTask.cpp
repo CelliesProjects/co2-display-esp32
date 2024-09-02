@@ -13,7 +13,7 @@ void displayTask(void *parameter)
     display.init();
     display.setBrightness(90);
     display.setTextSize((std::max(display.width(), display.height()) + 255) >> 8);
-    display.fillScreen(TFT_ORANGE);
+    display.fillScreen(TFT_GOLD);
 
     while (1)
     {
@@ -47,7 +47,7 @@ void displayTask(void *parameter)
         int32_t x, y;
         if (display.getTouch(&x, &y))
         {
-            display.fillRect(x - 2, y - 2, 5, 5, 0x0000FF);
+            display.fillRect(x - 2, y - 2, 5, 5, TFT_BLUE);
         }
     }
 }
