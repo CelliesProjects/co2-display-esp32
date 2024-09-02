@@ -2,25 +2,14 @@
 
 void printHelloWorld()
 {
-    gfx->setCursor(random(gfx->width()), random(gfx->height()));
-    gfx->setTextColor(random(0xffff), random(0xffff));
-    gfx->setTextSize(random(6) /* x scale */, random(6) /* y scale */, random(2) /* pixel_margin */);
-    gfx->println("Hello World!");
+    display.setCursor(random(display.width()), random(display.height()));
+    display.setTextColor(random(0xffff), random(0xffff));
+    display.setTextSize(random(6) /* x scale */, random(6) /* y scale */);
+    display.println("Hello World!");
 }
 
 void drawCurrentTouchpoints()
 {
-    if (touch.read())
-    {
-        uint8_t n = touch.getPointNum();
-        /// Serial.printf("getPointNum: %d  ", n);
-        for (uint8_t i = 0; i < n; i++)
-        {
-            TP_Point t = touch.getPoint(i);
-            // Serial.printf("[%d] point x: %d  point y: %d \r\n", i, t.x, t.y);
-            gfx->drawCircle(t.x, t.y, 10, BLACK);
-        }
-    }
 }
 
 void updateCO2()
@@ -33,31 +22,44 @@ void updateTempHumidity()
 
 void displayTask(void *parameter)
 {
-    // display backlight
-    ledcSetup(0, 1220, SOC_LEDC_TIMER_BIT_WIDE_NUM);
-    ledcAttachPin(GFX_BL, 0);
-    ledcWrite(0, (1ul << SOC_LEDC_TIMER_BIT_WIDE_NUM - 2));
-
-    // display
-    gfx->begin(16000000);
-    gfx->setRotation(0);
-    gfx->fillScreen(RED);
-    gfx->print("Hello world!");
-
-    // touch panel
-    pinMode(PIN_TOUCH_RES, OUTPUT);
-    digitalWrite(PIN_TOUCH_RES, 0);
-    delay(200);
-    digitalWrite(PIN_TOUCH_RES, 1);
-    delay(200);
-    if (!touch.init())
-        Serial.println("touch not started");
-    else
-        Serial.println("touch started");
+    display.init();
+    display.setBrightness(90);
+    display.setTextSize((std::max(display.width(), display.height()) + 255) >> 8);
+    display.fillScreen(TFT_ORANGE);
 
     while (1)
     {
-        drawCurrentTouchpoints();
-        delay(4);
+        static struct displayMessage msg;
+        if (xQueueReceive(displayQueue, &msg, pdTICKS_TO_MS(25)) == pdTRUE)
+        {
+            switch (msg.type)
+            {
+            case displayMessage::SYSTEM_MESSAGE:
+            {
+                display.setCursor(0, 0);
+                display.setTextColor(0xFFFFFF, 0x0);
+                display.setTextSize(2 /* x scale */, 5 /* y scale */);
+                display.println(msg.str);
+                break;
+            }
+
+            case displayMessage::CO2_LEVEL:
+            {
+                display.setCursor(50, 100);
+                display.setTextColor(0xFFFFFF, 0x0);
+                display.setTextSize(2 /* x scale */, 5 /* y scale */);
+                display.printf("CO2 %06i ppm", msg.value1);
+                break;
+            }
+
+            default:
+                log_w("unhandled tft msg type");
+            }
+        }
+        int32_t x, y;
+        if (display.getTouch(&x, &y))
+        {
+            display.fillRect(x - 2, y - 2, 5, 5, 0x0000FF);
+        }
     }
 }
