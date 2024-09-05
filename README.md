@@ -3,12 +3,7 @@
 https://github.com/CelliesProjects/co2-display-esp32 
 
 ## Project status
-Waiting for the delivery of `SHT31` temp & humidity sensor and `SenseAir S8 C02 sensor` from ebay.
-
-Estimated delivery: 
--  `SHT31` sept 25 
--  `SenseAir S8` Oct 3
-
+Running. Display, touch and CO<sup>2</sup> working.
 
 ## I2C GPIOs
 
@@ -31,12 +26,14 @@ Touchpanel is a gt911 I2C device
 |MOSI|47|
 |MISO|41|
 
-The sdcard is SPI.
+## The sdcard is SPI.
+
 | |GPIO|
 |:--:|:--:|
 |CS|42|
 
-The display is connected through SPI -no MISO GPIO- and a lot of GPIOs for the actual pixel data.
+## The display is connected through SPI -no MISO GPIO- and a lot of GPIOs for the actual pixel data.
+
 |st7701s|GPIO|
 |:--:|:--:|
 |BACKLIGHT|38|
@@ -65,18 +62,21 @@ The display is connected through SPI -no MISO GPIO- and a lot of GPIOs for the a
 |B4|15|
 |
 
-The GPIO that control the relays are on the backside of the panel (with the relays removed)
+## The GPIO that control the relays are on the backside of the panel (with the relays removed)
+
 |RELAY|GPIO|
 |:--:|:--:|
 |1| 40 |
 |2| 2 |
 |3| 1 |
 
-Also exposed on the backside are GPIOs marked TXD and RXD.
+## Exposed on the backside are GPIOs marked TXD and RXD.
+
 |MARK| GPIO|
 |:--:|:--:|
 |TXD|43|
 |RXD|44|
+
 
 A NS4168 dac is present on the board, but is not connected because of three zero ohm bridges missing on the board.<br>
 These bridges connect the `LRCLK`, `BCLK` and `SDATA` to the GPIO<br>
@@ -107,3 +107,11 @@ https://lastminuteengineers.com/sht31-temperature-humidity-sensor-arduino-tutori
 https://thingpulse.com/usb-settings-for-logging-with-the-esp32-s3-in-platformio/
 
 https://docs.espressif.com/projects/arduino-esp32/en/latest/troubleshooting.html
+
+https://www.makerfabs.com/esp32-s3-parallel-tft-with-touch-4-inch.html
+
+## Example using Lovyan GFX
+https://github.com/Makerfabs/ESP32-S3-Parallel-TFT-with-Touch-4inch/blob/main/example/lovyanGFX_demo
+
+## About the capacitors on the sensor board
+https://picaxeforum.co.uk/threads/5v-voltage-regulator-capacitor-values.30154/
