@@ -8,13 +8,10 @@ extern void displayTask(void *parameter);
 extern QueueHandle_t displayQueue;
 static TaskHandle_t displayTaskHandle = nullptr;
 
-extern void sensorTask(void *parameter);
-static TaskHandle_t sensorTaskHandle = nullptr;
-
 void setup()
 {
     Serial.begin(115200);
-    Serial.setDebugOutput(true);
+    //Serial.setDebugOutput(true);
 
     // mount sd card
     SPI.begin(48, 41, 47);
@@ -45,24 +42,9 @@ void setup()
             delay(100);
     }
 
-    taskResult = xTaskCreate(sensorTask,
-                                  NULL,
-                                  4096,
-                                  NULL,
-                                  10,
-                                  &sensorTaskHandle);
-
-    if (taskResult != pdPASS)
-    {
-        log_e("FATAL error! Could not create sensorTask. System HALTED!");
-        // send panic to the display
-        while (1)
-            delay(100);
-    }    
-
+    vTaskDelete(NULL);
 }
 
 void loop()
 {
-    delay(1500);
 }

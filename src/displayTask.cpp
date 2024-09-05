@@ -36,7 +36,25 @@ void displayTask(void *parameter)
                 display.setCursor(50, 100);
                 display.setTextColor(TFT_BLACK, TFT_WHITE);
                 display.setTextSize(2 /* x scale */, 5 /* y scale */);
-                display.printf("CO2 %06i ppm", msg.value1);
+                display.printf("CO2 %06i ppm", msg.sizeVal);
+                break;
+            }
+
+            case displayMessage::TEMPERATURE:
+            {
+                display.setCursor(50, 150);
+                display.setTextColor(TFT_BLACK, TFT_WHITE);
+                display.setTextSize(2 /* x scale */, 5 /* y scale */);
+                display.printf("TEMP: %.1f C", msg.floatVal);
+                break;
+            }
+
+            case displayMessage::HUMIDITY:
+            {
+                display.setCursor(50, 200);
+                display.setTextColor(TFT_BLACK, TFT_WHITE);
+                display.setTextSize(2 /* x scale */, 5 /* y scale */);
+                display.printf("HUMIDITY: %.1f%%", msg.floatVal);
                 break;
             }
 

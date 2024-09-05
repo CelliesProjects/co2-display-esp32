@@ -7,11 +7,13 @@ struct displayMessage
     {
         SYSTEM_MESSAGE,
         CO2_LEVEL,
+        TEMPERATURE,
+        HUMIDITY,
     };
     type type;
     char str[50];
-    size_t value1 = 0;
-    size_t value2 = 0;
+    size_t sizeVal = 0;
+    float floatVal = 0;
 };
 
 #endif
