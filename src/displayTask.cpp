@@ -54,7 +54,7 @@ void displayTask(void *parameter)
                 display.setCursor(50, 200);
                 display.setTextColor(TFT_BLACK, TFT_WHITE);
                 display.setTextSize(2 /* x scale */, 5 /* y scale */);
-                display.printf("HUMIDITY: %.1f%%", msg.floatVal);
+                display.printf("HUMIDITY: %i%%", msg.sizeVal);
                 break;
             }
 
