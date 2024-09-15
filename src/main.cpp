@@ -123,12 +123,22 @@ void processPayload(char *payload)
 
     switch (payload[0])
     {
-    case 'A': /* latest average - single item to add to front of history list*/
+    case 'A': /* latest average - single item to add to front of history list */
+    {
         addItemToHistory(payload);
+        displayMessage msg;
+        msg.type = displayMessage::CO2_HISTORY;
+        xQueueSend(displayQueue, &msg, portMAX_DELAY);
         break;
-    case 'G': /* history */
+    }
+    case 'G': /* history -sent once after boot to fill the history */
+    {
         parseAndBuildHistory(payload);
+        displayMessage msg;
+        msg.type = displayMessage::CO2_HISTORY;
+        xQueueSend(displayQueue, &msg, portMAX_DELAY);
         break;
+    }
 
     case 'C': /* current co2 level*/
     {

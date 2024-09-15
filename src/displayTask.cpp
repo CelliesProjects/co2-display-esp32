@@ -8,6 +8,33 @@ void printHelloWorld()
     display.println("Hello World!");
 }
 
+void updateCo2History()
+{
+    // teken de grafiek in een sprite
+    static LGFX_Sprite canvas(&display);
+    canvas.setColorDepth(lgfx::palette_2bit);
+    canvas.createSprite(400, 100);
+    static int x, y;
+    canvas.setPaletteColor(1, 0, 0, 255);
+    canvas.setPaletteColor(2, 31, 255, 31);
+    canvas.setPaletteColor(3, 255, 255, 191);
+
+    canvas.fillCircle(100, (millis()/15) % 100, 34, 1);
+    canvas.setFont(&fonts::Font4);
+    canvas.setTextDatum(lgfx::middle_center);
+    canvas.setCursor(10,20);
+    canvas.setTextColor(2);
+    canvas.print("hello world!");
+    canvas.setTextColor(3);
+
+    canvas.drawString("Hello cruel world!", 100, 50);
+
+    //canvas.fillCircle(100, 50, 7, 2);
+    canvas.pushSprite(10,350);
+
+    // sprite naar het scherm
+}
+
 void displayTask(void *parameter)
 {
     display.init();
@@ -60,7 +87,7 @@ void displayTask(void *parameter)
 
             case displayMessage::CO2_HISTORY:
             {
-
+                //updateCo2History();
                 break;
             }
 
@@ -68,6 +95,7 @@ void displayTask(void *parameter)
                 log_w("unhandled tft msg type");
             }
         }
+        updateCo2History();
         int32_t x, y;
         if (display.getTouch(&x, &y))
         {
