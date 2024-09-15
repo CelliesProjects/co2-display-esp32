@@ -4,6 +4,7 @@
 #include <Arduino.h>
 #include <list>
 
+#include "storageStruct.hpp"
 #include "displayMessageStruct.hpp"
 
 #include "LGFX_ESP32S3_RGB_GUITION_480x480_ST7701s_GT911.h"

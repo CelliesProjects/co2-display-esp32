@@ -21,7 +21,8 @@ extern QueueHandle_t displayQueue;
 static TaskHandle_t displayTaskHandle = nullptr;
 
 static WebSocketsClient webSocket;
-static std::list<struct storageStruct> history;
+//static std::list<struct storageStruct> history;
+std::list<struct storageStruct> history;
 
 /*
    there are the following tags for messages:
