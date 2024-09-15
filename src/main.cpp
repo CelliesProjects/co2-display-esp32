@@ -1,7 +1,6 @@
 #include <Arduino.h>
 #include <SPI.h>
 #include <SD.h>
-
 #include <list>
 
 #include <WebSocketsClient.h> /* https://github.com/Links2004/arduinoWebSockets */
@@ -20,46 +19,45 @@ extern QueueHandle_t displayQueue;
 static TaskHandle_t displayTaskHandle = nullptr;
 
 static WebSocketsClient webSocket;
-
 static std::list<struct storageStruct> history;
 
-static void buildHistory(char *payload)
+static void parseAndBuildHistory(char *payload)
 {
     char *pch = strtok(payload, "\n");
-
-    if (strstr(pch, "G:") != payload)
+    if (strcmp(pch, "G:"))
     {
-        Serial.println("payload is not a history list");
+        Serial.println("not a history list");
         return;
     }
 
-    pch = strtok(NULL, "\n"); // read first line of history
-
+    auto cnt = 0;
+    pch = strtok(NULL, "\n");
     while (pch)
     {
         struct storageStruct item = {NAN, 0, 0};
 
-        char *temp = strstr(pch, "T:");
+        const char *temp = strstr(pch, "T:");
         if (temp)
             item.temp = atof(temp + 2);
 
-        char *humidity = strstr(pch, "H:");
+        const char *humidity = strstr(pch, "H:");
         if (humidity)
             item.humidity = atoi(humidity + 2);
 
-        char *co2 = strstr(pch, "C:");
+        const char *co2 = strstr(pch, "C:");
         if (co2)
             item.co2 = atoi(co2 + 2);
 
         if (!isnan(item.temp) && item.co2 && item.humidity)
         {
             history.push_back(item);
-            //Serial.printf("item added \t%.1fC\t%i%%\t%ippm\n", item.temp, item.humidity, item.co2);
+            cnt++;
         }
         item = {NAN, 0, 0};
 
         pch = strtok(NULL, "\n");
     }
+    Serial.printf("Added %i item to history\n", cnt);
 }
 
 /*
@@ -82,7 +80,7 @@ void processPayload(char *payload)
     switch (payload[0])
     {
     case 'G':
-        buildHistory(payload);
+        parseAndBuildHistory(payload);
         break;
     case 'T':
     {
@@ -112,7 +110,8 @@ void processPayload(char *payload)
         log_e("unknown payload type %c", payload[0]);
     }
 }
-static auto lastContactMS = millis();
+
+static auto lastWebsocketEventMS = 0;
 
 void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
 {
@@ -124,11 +123,11 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
         break;
     case WStype_CONNECTED:
         Serial.printf("[WSc] Connected to url: %s\n", payload);
-        lastContactMS = millis();
+        lastWebsocketEventMS = millis();
         break;
     case WStype_TEXT:
         processPayload((char *)payload);
-        lastContactMS = millis();
+        lastWebsocketEventMS = millis();
         break;
     case WStype_BIN:
         Serial.printf("[WSc] get binary length: %u\n", length);
@@ -198,10 +197,10 @@ void setup()
 
 void loop()
 {
-    if (millis() - lastContactMS > WEBSOCKET_TIMEOUT)
+    if (webSocket.isConnected() && millis() - lastWebsocketEventMS > WEBSOCKET_TIMEOUT)
     {
         webSocket.disconnect();
-        lastContactMS = millis();
+        lastWebsocketEventMS = millis();
     }
     webSocket.loop();
     delay(2);
