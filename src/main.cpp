@@ -10,6 +10,8 @@
 #define WEBSOCKET_URL "/sensors"
 #define WEBSOCKET_TIMEOUT 4000
 
+#define HISTORY_MAX_ITEMS 180
+
 #include "secrets.h" /* untracked file containing wifi credentials */
 #include "storageStruct.hpp"
 #include "displayMessageStruct.hpp"
@@ -21,6 +23,52 @@ static TaskHandle_t displayTaskHandle = nullptr;
 static WebSocketsClient webSocket;
 static std::list<struct storageStruct> history;
 
+/*
+   there are the following tags for messages:
+   A: new saved average to add to the history
+   C: current co2 level
+   G: history
+   H: current humidity
+   P: ping used to keep the server informed that the client has not yet buggered off
+   T: current temperature
+   timeout is 4 seconds before client reconnects
+*/
+static void addItemToHistory(char *payload)
+{
+    char *pch = strtok(payload, "\n");
+    if (strcmp(pch, "A:"))
+    {
+        Serial.println("not a valid item");
+        return;
+    }
+
+    struct storageStruct item = {NAN, 0, 0};
+    pch = strtok(NULL, "\n");
+    if (pch)
+    {
+        const char *temp = strstr(pch, "T:");
+        if (temp)
+            item.temp = atof(temp + 2);
+
+        const char *humidity = strstr(pch, "H:");
+        if (humidity)
+            item.humidity = atoi(humidity + 2);
+
+        const char *co2 = strstr(pch, "C:");
+        if (co2)
+            item.co2 = atoi(co2 + 2);
+
+        if (!isnan(item.temp) && item.co2 && item.humidity)
+        {
+            if (history.size() == HISTORY_MAX_ITEMS)
+                history.pop_back();
+
+            history.push_front(item);
+        }
+    }
+    Serial.printf("%i items in history\n", history.size());
+}
+
 static void parseAndBuildHistory(char *payload)
 {
     char *pch = strtok(payload, "\n");
@@ -31,10 +79,12 @@ static void parseAndBuildHistory(char *payload)
     }
 
     auto cnt = 0;
+    struct storageStruct item = {NAN, 0, 0};
     pch = strtok(NULL, "\n");
     while (pch)
     {
-        struct storageStruct item = {NAN, 0, 0};
+        if (history.size() == HISTORY_MAX_ITEMS)
+            return;
 
         const char *temp = strstr(pch, "T:");
         if (temp)
@@ -57,19 +107,9 @@ static void parseAndBuildHistory(char *payload)
 
         pch = strtok(NULL, "\n");
     }
-    Serial.printf("Added %i item to history\n", cnt);
+    Serial.printf("%i item(s) to history\n", cnt);
 }
 
-/*
-   we can have the following tags for messages:
-   A: new saved average to add to the history
-   C: current co2 level
-   G: history
-   H: current humidity
-   P: ping used to keep the server informed that the client is not yet buggered off
-   T: current temperature
-   timeout is 4 seconds before client reconnects
-*/
 void processPayload(char *payload)
 {
     if (payload[1] != ':')
@@ -77,37 +117,48 @@ void processPayload(char *payload)
         Serial.printf("payload contains no : \n%s", payload);
         return;
     }
+
+    if (payload[0] == 'P') /* P: used as a ping */
+        return;
+
     switch (payload[0])
     {
-    case 'G':
+    case 'A': /* latest average - single item to add to front of history list*/
+        addItemToHistory(payload);
+        break;
+    case 'G': /* history */
         parseAndBuildHistory(payload);
         break;
-    case 'T':
-    {
-        displayMessage msg;
-        msg.type = displayMessage::TEMPERATURE;
-        msg.floatVal = atof(&payload[2]);
-        xQueueSend(displayQueue, &msg, portMAX_DELAY);
-    }
-    break;
-    case 'H':
-    {
-        displayMessage msg;
-        msg.type = displayMessage::HUMIDITY;
-        msg.sizeVal = atoi(&payload[2]);
-        xQueueSend(displayQueue, &msg, portMAX_DELAY);
-    }
-    break;
-    case 'C':
+
+    case 'C': /* current co2 level*/
     {
         displayMessage msg;
         msg.type = displayMessage::CO2_LEVEL;
         msg.sizeVal = atoi(&payload[2]);
         xQueueSend(displayQueue, &msg, portMAX_DELAY);
+        break;
     }
-    break;
+
+    case 'H': /* current humidity */
+    {
+        displayMessage msg;
+        msg.type = displayMessage::HUMIDITY;
+        msg.sizeVal = atoi(&payload[2]);
+        xQueueSend(displayQueue, &msg, portMAX_DELAY);
+        break;
+    }
+
+    case 'T': /* current temperature */
+    {
+        displayMessage msg;
+        msg.type = displayMessage::TEMPERATURE;
+        msg.floatVal = atof(&payload[2]);
+        xQueueSend(displayQueue, &msg, portMAX_DELAY);
+        break;
+    }
+
     default:
-        log_e("unknown payload type %c", payload[0]);
+        Serial.printf("unknown payload type '%c'\n", payload[0]);
     }
 }
 
@@ -115,7 +166,6 @@ static auto lastWebsocketEventMS = 0;
 
 void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
 {
-
     switch (type)
     {
     case WStype_DISCONNECTED:
@@ -187,8 +237,6 @@ void setup()
         delay(10);
 
     Serial.printf("connected to %s\n", WIFI_SSID);
-
-    // setup the websocket connection
 
     webSocket.begin(WEBSOCKET_SERVER, WEBSOCKET_PORT, WEBSOCKET_URL);
     webSocket.onEvent(webSocketEvent);

@@ -11,14 +11,14 @@ void printHelloWorld()
 void displayTask(void *parameter)
 {
     display.init();
-    display.setBrightness(90);
+    display.setBrightness(70);
     display.setTextSize((std::max(display.width(), display.height()) + 255) >> 8);
     display.fillScreen(TFT_GOLD);
 
     while (1)
     {
         static struct displayMessage msg;
-        if (xQueueReceive(displayQueue, &msg, pdTICKS_TO_MS(25)) == pdTRUE)
+        if (xQueueReceive(displayQueue, &msg, pdTICKS_TO_MS(5)) == pdTRUE)
         {
             switch (msg.type)
             {
@@ -55,6 +55,12 @@ void displayTask(void *parameter)
                 display.setTextColor(TFT_BLACK, TFT_WHITE);
                 display.setTextSize(2 /* x scale */, 5 /* y scale */);
                 display.printf("HUMIDITY: %i%%", msg.sizeVal);
+                break;
+            }
+
+            case displayMessage::CO2_HISTORY:
+            {
+
                 break;
             }
 

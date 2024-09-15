@@ -9,6 +9,8 @@ struct displayMessage
         CO2_LEVEL,
         TEMPERATURE,
         HUMIDITY,
+        CO2_HISTORY,
+        
     };
     type type;
     char str[50];
