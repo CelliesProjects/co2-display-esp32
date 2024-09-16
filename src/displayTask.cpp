@@ -44,8 +44,8 @@ void updateCo2History()
     auto cnt = 0;
     for (const auto &item : history)
     {
-        const auto BAR_WIDTH = 3;
         const auto GAP_WIDTH = 1;
+        const auto BAR_WIDTH = 3;
         const auto BAR_HEIGHT = map(item.co2, 0, highestC02, 0, co2Graph.height());
         const auto xpos = co2Graph.width() - cnt * (BAR_WIDTH + GAP_WIDTH);
         co2Graph.drawRect(xpos - BAR_WIDTH,
