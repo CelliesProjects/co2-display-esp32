@@ -21,11 +21,10 @@ extern QueueHandle_t displayQueue;
 static TaskHandle_t displayTaskHandle = nullptr;
 
 static WebSocketsClient webSocket;
-//static std::list<struct storageStruct> history;
 std::list<struct storageStruct> history;
 
 /*
-   there are the following tags for messages:
+   these are the tags for messages:
    A: new saved average to add to the history
    C: current co2 level
    G: history
@@ -78,6 +77,8 @@ static void parseAndBuildHistory(char *payload)
         Serial.println("not a history list");
         return;
     }
+
+    history.clear();
 
     auto cnt = 0;
     struct storageStruct item = {NAN, 0, 0};
