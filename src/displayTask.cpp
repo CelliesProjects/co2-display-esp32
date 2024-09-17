@@ -1,34 +1,8 @@
 #include "displayTask.hpp"
 
-long mapl(long x, long in_min, long in_max, long out_min, long out_max)
+float mapf(float x, float in_min, float in_max, float out_min, float out_max)
 {
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
-}
-
-void helloWorld()
-{
-    // teken de grafiek in een sprite
-    static LGFX_Sprite canvas(&display);
-
-    canvas.setColorDepth(lgfx::palette_2bit);
-    canvas.createSprite(400, 100);
-    // static int x, y;
-    canvas.setPaletteColor(1, 0, 0, 255);
-    canvas.setPaletteColor(2, 31, 255, 31);
-    canvas.setPaletteColor(3, 255, 255, 191);
-
-    canvas.fillCircle(100, (millis() / 15) % 100, 34, 1);
-    canvas.setFont(&fonts::Font4);
-    canvas.setTextDatum(lgfx::middle_center);
-    canvas.setCursor(10, 20);
-    canvas.setTextColor(2);
-    canvas.print("hello world!");
-    canvas.setTextColor(3);
-
-    canvas.drawString("Hello cruel world!", 100, 50);
-
-    // canvas.fillCircle(100, 50, 7, 2);
-    canvas.pushSprite(10, 350);
 }
 // https://lovyangfx.readthedocs.io/en/latest/02_using.html
 
@@ -36,54 +10,46 @@ void helloWorld()
 
 void updateCo2History()
 {
-    const auto LOWEST_LEVEL_PPM = 400;
+    auto startMS = millis();
 
     static LGFX_Sprite co2Graph(&display);
     co2Graph.setColorDepth(lgfx::palette_2bit);
-    co2Graph.createSprite(400, 100);
+    co2Graph.createSprite(380, 100);
     co2Graph.setPaletteColor(1, 0, 0, 255);
     co2Graph.setPaletteColor(2, 31, 255, 31);
-    co2Graph.setPaletteColor(3, 255, 255, 191);
+    co2Graph.setPaletteColor(3, 180, 180, 180);
 
-    const auto GAP_WIDTH = 2;
-    const auto BAR_WIDTH = 1;
+    // grid
+    co2Graph.setColor(3);
+    co2Graph.setFont(0);
+    co2Graph.setTextColor(3);
+    co2Graph.setTextDatum(BC_DATUM);
+    co2Graph.setTextWrap(false, false);
 
-    Serial.printf("starting loop at %lu\n", millis());
+    const auto LOWEST_LEVEL_PPM = 400;
+    const auto HIGHEST_LEVEL_PPM = 2000;
 
-    auto itemsNeeded = co2Graph.width() / (BAR_WIDTH + GAP_WIDTH);
-    int32_t highestCo2 = 0;
-    for (const auto &item : history)
+    for (auto hgrid = 500; hgrid < HIGHEST_LEVEL_PPM; hgrid += 500)
     {
-        highestCo2 = std::max(highestCo2, item.co2);
-        if (!itemsNeeded--)
-            break;
-    }
-    Serial.printf("found highest at %lu\n", millis());
-
-    // draw a grid to indicate 500ppm and 1000ppm and so on
-    // change this to a while loop as it takes +-1700ms this way
-    co2Graph.setColor(1);
-    for (int hgrid = 500;; hgrid = hgrid + 500)
-    {
-        const auto ypos = mapl(hgrid, LOWEST_LEVEL_PPM, highestCo2, co2Graph.height(), 0);
-        if (ypos > co2Graph.height())
-            break;
-        //co2Graph.startWrite();
-        co2Graph.drawLine(0, ypos, co2Graph.width(), ypos);
-        //co2Graph.endWrite();
-        // Serial.printf("drawing %i line", hgrid);
-        //  co2Graph.setColor(3);
-        //  co2Graph.setCursor(co2Graph.width() / 2, ypos);
-        //  co2Graph.print(hgrid);
+        const auto ypos = mapf(hgrid, LOWEST_LEVEL_PPM, HIGHEST_LEVEL_PPM, co2Graph.height(), 0);
+        co2Graph.writeFastHLine(0, ypos, co2Graph.width());
+        co2Graph.setCursor(10, ypos);
+        co2Graph.print(hgrid);
+        co2Graph.setCursor(co2Graph.width() >> 1, ypos);
+        co2Graph.print(hgrid);
+        co2Graph.setCursor(co2Graph.width() - 35, ypos);
+        co2Graph.print(hgrid);
     }
 
-    Serial.printf("grid drawn at %lu\n", millis());
+    // actual data
+    const auto BAR_WIDTH = 3;
+    const auto GAP_WIDTH = 1;
 
     auto cnt = 0;
     co2Graph.setColor(2);
     for (const auto &item : history)
     {
-        const auto BAR_HEIGHT = mapl(item.co2, LOWEST_LEVEL_PPM, highestCo2, 0, co2Graph.height());
+        const auto BAR_HEIGHT = mapf(item.co2, LOWEST_LEVEL_PPM, HIGHEST_LEVEL_PPM, 0, co2Graph.height());
         const auto xpos = co2Graph.width() - cnt * (BAR_WIDTH + GAP_WIDTH);
         co2Graph.fillRect(xpos - BAR_WIDTH,
                           co2Graph.height(),
@@ -93,26 +59,35 @@ void updateCo2History()
             break;
         cnt++;
     }
-
-    Serial.printf("graph drawn at %lu\n", millis());
-
-    // draw the label on the graph
-    co2Graph.setFont(&fonts::Font4);
-    co2Graph.setTextDatum(lgfx::bottom_left);
-    co2Graph.setColor(0);
-    co2Graph.setTextColor(2);
-    const char label[] = "CO2 level ppm";
-    const auto textWidth = co2Graph.textWidth(label) + 2;
-    const auto textHeight = co2Graph.fontHeight();
-    co2Graph.fillRect(2, co2Graph.height() - textHeight, textWidth, textHeight);
-
-    co2Graph.drawString(label, 2, co2Graph.height());
-
     Serial.printf("pushed %i items to screen\n", cnt);
-    co2Graph.pushSprite(10, 320);
+    co2Graph.pushSprite(0, 0);
 
-    Serial.printf("done at %lu\n\n", millis());
+    Serial.printf("done in %lums\n", millis() - startMS);
 }
+
+void updateCo2Value(const size_t newValue)
+{
+
+    static LGFX_Sprite co2Value(&display);
+    co2Value.setColorDepth(lgfx::palette_2bit);
+    co2Value.createSprite(100, 100);
+    co2Value.setPaletteColor(1, 0, 0, 255);
+    co2Value.setPaletteColor(2, 31, 255, 31);
+    co2Value.setPaletteColor(3, 180, 180, 180);
+
+    co2Value.fillCircle(co2Value.width() >> 1, co2Value.height() >> 1, 50, 1);
+    co2Value.setTextDatum(CC_DATUM);
+    co2Value.setTextColor(2);
+    co2Value.drawNumber(newValue, co2Value.width() >> 1, (co2Value.height() >> 1) + 4, &DejaVu40);
+    //co2Value.setTextColor(0);
+    co2Value.drawString("CO", 46, 20, &DejaVu24);
+    co2Value.drawString("2", 68, 10, &DejaVu12);
+    co2Value.drawString("ppm", 50, 80, &DejaVu18);
+
+    co2Value.pushSprite(380,0);
+}
+
+// https://lovyangfx.readthedocs.io/en/latest/02_using.html
 
 void displayTask(void *parameter)
 {
@@ -139,10 +114,14 @@ void displayTask(void *parameter)
 
             case displayMessage::CO2_LEVEL:
             {
-                display.setCursor(50, 100);
-                display.setTextColor(TFT_BLACK, TFT_WHITE);
-                display.setTextSize(2 /* x scale */, 5 /* y scale */);
+                updateCo2Value(msg.sizeVal);
+                /*
+                                display.setCursor(50, 100);
+                                display.setTextColor(TFT_BLACK, TFT_WHITE);
+                                display.setTextSize(2 , 5 );
                 display.printf("CO2 %06i ppm", msg.sizeVal);
+                */
+
                 break;
             }
 
