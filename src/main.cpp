@@ -131,6 +131,9 @@ void processPayload(char *payload)
         displayMessage msg;
         msg.type = displayMessage::CO2_HISTORY;
         xQueueSend(displayQueue, &msg, portMAX_DELAY);
+        delay(1);
+        msg.type = displayMessage::HUMIDITY_HISTORY;
+        xQueueSend(displayQueue, &msg, portMAX_DELAY);        
         break;
     }
     case 'G': /* history -sent once after boot to fill the history */
@@ -139,6 +142,9 @@ void processPayload(char *payload)
         displayMessage msg;
         msg.type = displayMessage::CO2_HISTORY;
         xQueueSend(displayQueue, &msg, portMAX_DELAY);
+        delay(1);
+        msg.type = displayMessage::HUMIDITY_HISTORY;
+        xQueueSend(displayQueue, &msg, portMAX_DELAY);        
         break;
     }
 
@@ -259,6 +265,7 @@ void loop()
 {
     if (webSocket.isConnected() && millis() - lastWebsocketEventMS > WEBSOCKET_TIMEOUT)
     {
+        Serial.println("ws timeout");
         webSocket.disconnect();
         lastWebsocketEventMS = millis();
     }

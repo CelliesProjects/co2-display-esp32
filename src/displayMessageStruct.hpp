@@ -10,6 +10,8 @@ struct displayMessage
         TEMPERATURE,
         HUMIDITY,
         CO2_HISTORY,
+        HUMIDITY_HISTORY,
+        TEMPERATURE_HISTORY,
         
     };
     type type;
