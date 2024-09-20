@@ -8,6 +8,16 @@ float mapf(float x, float in_min, float in_max, float out_min, float out_max)
 
 // https://m5stack.lang-ship.com/howto/m5gfx/font/
 
+// https://learn.adafruit.com/adafruit-gfx-graphics-library/using-fonts
+
+// https://learn.adafruit.com/adafruit-gfx-graphics-library?view=all#extended-characters-cp437-and-a-lurking-bug-3100368
+
+// https://oleddisplay.squix.ch/
+
+// https://github.com/Bodmer/TFT_eSPI/blob/master/examples/Smooth%20Fonts/FLASH_Array/Font_Demo_1_Array/Font_Demo_1_Array.ino
+
+// https://rop.nl/truetype2gfx/
+
 static void updateCo2History(const int32_t w, const int32_t h, const int32_t x, const int32_t y)
 {
     auto startMS = millis();
@@ -15,7 +25,7 @@ static void updateCo2History(const int32_t w, const int32_t h, const int32_t x, 
     static LGFX_Sprite co2Graph(&display);
     co2Graph.setColorDepth(lgfx::palette_2bit);
     co2Graph.createSprite(w, h);
-    co2Graph.setPaletteColor(1, 0, 0, 255);
+    co2Graph.setPaletteColor(1, 0, 0, 100);
     co2Graph.setPaletteColor(2, 31, 255, 31);
     co2Graph.setPaletteColor(3, 180, 180, 180);
 
@@ -42,18 +52,17 @@ static void updateCo2History(const int32_t w, const int32_t h, const int32_t x, 
     }
 
     // grid
-    co2Graph.setTextColor(3);
-    co2Graph.setTextDatum(BC_DATUM);
+    co2Graph.setTextColor(3, 0);
+    co2Graph.setTextDatum(CC_DATUM);
     co2Graph.setTextWrap(false, false);
 
     for (auto hgrid = 500; hgrid < HIGHEST_LEVEL_PPM; hgrid += 500)
     {
         const auto ypos = mapf(hgrid, LOWEST_LEVEL_PPM, HIGHEST_LEVEL_PPM, co2Graph.height(), 0);
         co2Graph.writeFastHLine(0, ypos, co2Graph.width(), 1);
-         // draw the values in white
-        co2Graph.drawNumber(hgrid, 20, ypos, &DejaVu12);
+        //co2Graph.drawNumber(hgrid, 20, ypos, &DejaVu12);
         co2Graph.drawNumber(hgrid, co2Graph.width() >> 1, ypos, &DejaVu12);
-        co2Graph.drawNumber(hgrid, co2Graph.width() - 20, ypos, &DejaVu12);
+        // co2Graph.drawNumber(hgrid, co2Graph.width() - 20, ypos, &DejaVu12);
     }
 
     co2Graph.pushSprite(x, y);
@@ -69,8 +78,8 @@ static void updateCo2Value(const int32_t w, const int32_t h, const int32_t x, co
     co2Value.setPaletteColor(1, 0, 0, 255);
     co2Value.setPaletteColor(2, 31, 255, 31);
     co2Value.setPaletteColor(3, 180, 180, 180);
+    co2Value.fillScreen(1);
 
-    co2Value.fillCircle(co2Value.width() >> 1, co2Value.height() >> 1, w / 2, 1);
     co2Value.setTextDatum(CC_DATUM);
     co2Value.setTextColor(2);
     co2Value.drawNumber(newValue, co2Value.width() >> 1, (co2Value.height() >> 1) + 4, &DejaVu40);
@@ -92,7 +101,7 @@ static void updateHumidityHistory(const int32_t w, const int32_t h, const int32_
     static LGFX_Sprite humidityGraph(&display);
     humidityGraph.setColorDepth(lgfx::palette_2bit);
     humidityGraph.createSprite(w, h);
-    humidityGraph.setPaletteColor(1, 0, 0, 255);
+    humidityGraph.setPaletteColor(1, 0, 0, 100);
     humidityGraph.setPaletteColor(2, 31, 255, 31);
     humidityGraph.setPaletteColor(3, 180, 180, 180);
 
@@ -110,27 +119,27 @@ static void updateHumidityHistory(const int32_t w, const int32_t h, const int32_
         const auto BAR_HEIGHT = mapf(item.humidity, LOWEST_LEVEL_HUMIDITY, HIGHEST_LEVEL_HUMIDITY, 0, humidityGraph.height());
         const auto xpos = humidityGraph.width() - cnt * (BAR_WIDTH + GAP_WIDTH);
         humidityGraph.fillRect(xpos - BAR_WIDTH,
-                          humidityGraph.height(),
-                          BAR_WIDTH,
-                          -BAR_HEIGHT);
+                               humidityGraph.height(),
+                               BAR_WIDTH,
+                               -BAR_HEIGHT);
         if (xpos < 0)
             break;
         cnt++;
     }
 
     // grid
-    humidityGraph.setTextColor(3);
-    humidityGraph.setTextDatum(BC_DATUM);
+    humidityGraph.setTextColor(3, 0);
+    humidityGraph.setTextDatum(CC_DATUM);
     humidityGraph.setTextWrap(false, false);
 
     for (auto hgrid = 25; hgrid < HIGHEST_LEVEL_HUMIDITY; hgrid += 25)
     {
         const auto ypos = mapf(hgrid, LOWEST_LEVEL_HUMIDITY, HIGHEST_LEVEL_HUMIDITY, humidityGraph.height(), 0);
         humidityGraph.writeFastHLine(0, ypos, humidityGraph.width(), 1);
-         // draw the values in white
-        humidityGraph.drawNumber(hgrid, 20, ypos, &DejaVu12);
+        // draw the values in white
+        //humidityGraph.drawNumber(hgrid, 20, ypos, &DejaVu12);
         humidityGraph.drawNumber(hgrid, humidityGraph.width() >> 1, ypos, &DejaVu12);
-        humidityGraph.drawNumber(hgrid, humidityGraph.width() - 20, ypos, &DejaVu12);
+        //humidityGraph.drawNumber(hgrid, humidityGraph.width() - 20, ypos, &DejaVu12);
     }
 
     humidityGraph.pushSprite(x, y);
@@ -146,8 +155,8 @@ static void updateHumidityValue(const int32_t w, const int32_t h, const int32_t 
     humidityValue.setPaletteColor(1, 0, 0, 255);
     humidityValue.setPaletteColor(2, 31, 255, 31);
     humidityValue.setPaletteColor(3, 180, 180, 180);
+    humidityValue.fillScreen(1);
 
-    humidityValue.fillCircle(humidityValue.width() >> 1, humidityValue.height() >> 1, w / 2, 1);
     humidityValue.setTextDatum(CC_DATUM);
     humidityValue.setTextColor(2);
     humidityValue.drawNumber(newValue, humidityValue.width() >> 1, (humidityValue.height() >> 1) + 4, &DejaVu40);
@@ -159,12 +168,84 @@ static void updateHumidityValue(const int32_t w, const int32_t h, const int32_t 
     humidityValue.pushSprite(x, y);
 }
 
+static void updateTempHistory(const int32_t w, const int32_t h, const int32_t x, const int32_t y)
+{
+    auto startMS = millis();
 
-// https://lovyangfx.readthedocs.io/en/latest/02_using.html
+    static LGFX_Sprite tempGraph(&display);
+    tempGraph.setColorDepth(lgfx::palette_2bit);
+    tempGraph.createSprite(w, h);
+    tempGraph.setPaletteColor(1, 0, 0, 100);
+    tempGraph.setPaletteColor(2, 31, 255, 31);
+    tempGraph.setPaletteColor(3, 130, 130, 130);
+
+    const auto BAR_WIDTH = 1;
+    const auto GAP_WIDTH = 2;
+
+    const auto LOWEST_TEMP_C = 15;
+    const auto HIGHEST_TEMP_C = 30;
+
+    // actual data
+    auto cnt = 0;
+    tempGraph.setColor(2);
+    for (const auto &item : history)
+    {
+        const auto BAR_HEIGHT = mapf(item.temp, LOWEST_TEMP_C, HIGHEST_TEMP_C, 0, tempGraph.height());
+        const auto xpos = tempGraph.width() - cnt * (BAR_WIDTH + GAP_WIDTH);
+        tempGraph.fillRect(xpos - BAR_WIDTH,
+                           tempGraph.height(),
+                           BAR_WIDTH,
+                           -BAR_HEIGHT);
+        if (xpos < 0)
+            break;
+        cnt++;
+    }
+
+    // grid
+    tempGraph.setTextColor(3, 0);
+    // tempGraph.setTextDatum(BC_DATUM);
+    tempGraph.setTextDatum(CC_DATUM);
+    tempGraph.setTextWrap(false, false);
+
+    for (auto hgrid = 20; hgrid < HIGHEST_TEMP_C; hgrid += 5)
+    {
+        const auto ypos = mapf(hgrid, LOWEST_TEMP_C, HIGHEST_TEMP_C, tempGraph.height(), 0);
+        tempGraph.writeFastHLine(0, ypos, tempGraph.width(), 1);
+        // tempGraph.drawNumber(hgrid, 20, ypos, &DejaVu12);
+        tempGraph.drawNumber(hgrid, tempGraph.width() >> 1, ypos, &DejaVu12);
+        // tempGraph.drawNumber(hgrid, tempGraph.width() - 20, ypos, &DejaVu12);
+    }
+
+    tempGraph.pushSprite(x, y);
+    Serial.printf("pushed %i items to screen\n", cnt);
+    Serial.printf("done in %lums\n", millis() - startMS);
+}
+
+static void updateTempValue(const int32_t w, const int32_t h, const int32_t x, const int32_t y, float newValue)
+{
+    static LGFX_Sprite tempValue(&display);
+    tempValue.setColorDepth(lgfx::palette_2bit);
+    tempValue.createSprite(w, h);
+    tempValue.setPaletteColor(1, 0, 0, 255);
+    tempValue.setPaletteColor(2, 31, 255, 31);
+    tempValue.setPaletteColor(3, 180, 180, 180);
+    tempValue.fillScreen(1);
+
+    tempValue.setTextDatum(CC_DATUM);
+    tempValue.setTextColor(2);
+    tempValue.drawFloat(newValue, 1, tempValue.width() >> 1, (tempValue.height() >> 1) + 4, &DejaVu40);
+
+    const auto xMiddle = tempValue.width() >> 1;
+    tempValue.drawString("T", xMiddle, tempValue.height() >> 2, &DejaVu24);
+    tempValue.drawString("Celsius", xMiddle, tempValue.height() - (tempValue.height() >> 2), &DejaVu18);
+    tempValue.pushSprite(x, y);
+}
 
 void displayTask(void *parameter)
 {
     display.init();
+    //display.setColor(0,100,100);
+    display.clear(0x0000FF);
     display.setBrightness(130);
 
     while (1)
@@ -185,34 +266,37 @@ void displayTask(void *parameter)
 
             case displayMessage::CO2_LEVEL:
             {
-                updateCo2Value(110, 110, 0, 0, msg.sizeVal);
+                updateCo2Value(110, 110, 370, 0, msg.sizeVal);
+                break;
+            }
+
+            case displayMessage::CO2_HISTORY:
+            {
+                updateCo2History(370, 110, 0, 0);
                 break;
             }
 
             case displayMessage::TEMPERATURE:
             {
-                display.setCursor(50, 350);
-                display.setTextColor(TFT_BLACK, TFT_WHITE);
-                display.setTextSize(2 /* x scale */, 5 /* y scale */);
-                display.printf("TEMP: %.1f C", msg.floatVal);
+                updateTempValue(110, 110, 370, 240, msg.floatVal);
+                break;
+            }
+
+            case displayMessage::TEMPERATURE_HISTORY:
+            {
+                updateTempHistory(370, 110, 0, 240);
                 break;
             }
 
             case displayMessage::HUMIDITY:
             {
-                updateHumidityValue(110, 110, 0, 110, msg.sizeVal);
+                updateHumidityValue(110, 110, 370, 120, msg.sizeVal);
                 break;
             }
 
             case displayMessage::HUMIDITY_HISTORY:
             {
-                updateHumidityHistory(370, 110, 110, 110);
-                break;
-            }            
-
-            case displayMessage::CO2_HISTORY:
-            {
-                updateCo2History(370, 110, 110, 0);
+                updateHumidityHistory(370, 110, 0, 120);
                 break;
             }
 

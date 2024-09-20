@@ -4,6 +4,8 @@
 #include <Arduino.h>
 #include <list>
 
+//#include "fonts/Ubuntu-Medium-18.h"
+
 #include "storageStruct.hpp"
 #include "displayMessageStruct.hpp"
 
@@ -17,6 +19,5 @@ static LGFX display;
 QueueHandle_t displayQueue = nullptr;
 
 void displayTask(void *parameter);
-
 
 #endif

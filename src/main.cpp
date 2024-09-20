@@ -133,7 +133,10 @@ void processPayload(char *payload)
         xQueueSend(displayQueue, &msg, portMAX_DELAY);
         delay(1);
         msg.type = displayMessage::HUMIDITY_HISTORY;
-        xQueueSend(displayQueue, &msg, portMAX_DELAY);        
+        xQueueSend(displayQueue, &msg, portMAX_DELAY);
+        delay(1);
+        msg.type = displayMessage::TEMPERATURE_HISTORY;
+        xQueueSend(displayQueue, &msg, portMAX_DELAY);
         break;
     }
     case 'G': /* history -sent once after boot to fill the history */
@@ -144,7 +147,10 @@ void processPayload(char *payload)
         xQueueSend(displayQueue, &msg, portMAX_DELAY);
         delay(1);
         msg.type = displayMessage::HUMIDITY_HISTORY;
-        xQueueSend(displayQueue, &msg, portMAX_DELAY);        
+        xQueueSend(displayQueue, &msg, portMAX_DELAY);
+        delay(1);
+        msg.type = displayMessage::TEMPERATURE_HISTORY;
+        xQueueSend(displayQueue, &msg, portMAX_DELAY);
         break;
     }
 
@@ -170,6 +176,7 @@ void processPayload(char *payload)
     {
         displayMessage msg;
         msg.type = displayMessage::TEMPERATURE;
+        // msg.sizeVal = (int)atof(&payload[2]);
         msg.floatVal = atof(&payload[2]);
         xQueueSend(displayQueue, &msg, portMAX_DELAY);
         break;
