@@ -4,8 +4,6 @@
 #include <Arduino.h>
 #include <list>
 
-//#include "fonts/Ubuntu-Medium-18.h"
-
 #include "storageStruct.hpp"
 #include "displayMessageStruct.hpp"
 

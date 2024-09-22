@@ -4,6 +4,9 @@ float mapf(float x, float in_min, float in_max, float out_min, float out_max)
 {
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
+
+// https://m5stack.lang-ship.com/howto/m5gfx/font/                                            <-------font list
+
 // https://lovyangfx.readthedocs.io/en/latest/02_using.html
 
 // https://m5stack.lang-ship.com/howto/m5gfx/font/
@@ -17,6 +20,10 @@ float mapf(float x, float in_min, float in_max, float out_min, float out_max)
 // https://github.com/Bodmer/TFT_eSPI/blob/master/examples/Smooth%20Fonts/FLASH_Array/Font_Demo_1_Array/Font_Demo_1_Array.ino
 
 // https://rop.nl/truetype2gfx/
+
+// https://github.com/robjen/GFX_fonts
+
+// https://tchapi.github.io/Adafruit-GFX-Font-Customiser/
 
 static void updateCo2History(const int32_t w, const int32_t h, const int32_t x, const int32_t y)
 {
@@ -60,7 +67,78 @@ static void updateCo2History(const int32_t w, const int32_t h, const int32_t x, 
     {
         const auto ypos = mapf(hgrid, LOWEST_LEVEL_PPM, HIGHEST_LEVEL_PPM, co2Graph.height(), 0);
         co2Graph.writeFastHLine(0, ypos, co2Graph.width(), 1);
-        //co2Graph.drawNumber(hgrid, 20, ypos, &DejaVu12);
+        // co2Graph.drawNumber(hgrid, 20, ypos, &DejaVu12);
+        co2Graph.drawNumber(hgrid, co2Graph.width() >> 1, ypos, &DejaVu12);
+        // co2Graph.drawNumber(hgrid, co2Graph.width() - 20, ypos, &DejaVu12);
+    }
+
+    co2Graph.pushSprite(x, y);
+    Serial.printf("pushed %i items to screen\n", cnt);
+    Serial.printf("done in %lums\n", millis() - startMS);
+}
+
+static void updateCo2History_16b(const int32_t w, const int32_t h, const int32_t x, const int32_t y)
+{
+    auto startMS = millis();
+
+    static LGFX_Sprite co2Graph(&display);
+    co2Graph.setColorDepth(lgfx::rgb565_nonswapped);
+    co2Graph.createSprite(w, h);
+
+    const auto GREEN = co2Graph.color565(0, 255, 0);
+    const auto AMBER = co2Graph.color565(127, 127, 0);
+    const auto RED = co2Graph.color565(255, 0, 0);
+
+    const auto GREEN_MAX_PPM = 500;
+    const auto AMBER_MAX_PPM = 1000;
+    const auto RED_MAX_PPM = 1500;
+
+    const auto BAR_WIDTH = 1;
+    const auto GAP_WIDTH = 2;
+
+    const auto LOWEST_LEVEL_PPM = 400;
+    const auto HIGHEST_LEVEL_PPM = 2000;
+
+    const auto GREEN_MAX_Y = mapf(GREEN_MAX_PPM, HIGHEST_LEVEL_PPM, LOWEST_LEVEL_PPM, h, 0);
+    const auto RED_MAX_Y = mapf(RED_MAX_PPM, HIGHEST_LEVEL_PPM, LOWEST_LEVEL_PPM, h, 0);
+
+    // actual data
+    auto cnt = 0;
+    for (const auto &item : history)
+    {
+        const int BAR_HEIGHT = mapf(item.co2, LOWEST_LEVEL_PPM, HIGHEST_LEVEL_PPM, 0, co2Graph.height());
+        const auto xpos = co2Graph.width() - cnt * (BAR_WIDTH + GAP_WIDTH);
+
+        const auto TOP_POS = max(BAR_HEIGHT, co2Graph.height());
+        /*
+        // draw the red part
+            bar.drawFastVLine(0, 0, RED_MAX_Y, RED);
+            // draw the gradient from red to green
+            bar.drawGradientLine(0, RED_MAX_Y, 0, GREEN_MAX_Y, RED, GREEN);
+            // draw the green part
+            bar.drawFastVLine(0, GREEN_MAX_Y, 0, co2Graph.height());
+        */
+
+        co2Graph.fillRect(xpos - BAR_WIDTH,
+                          co2Graph.height(),
+                          BAR_WIDTH,
+                          -BAR_HEIGHT);
+
+        if (xpos < 0)
+            break;
+        cnt++;
+    }
+
+    // grid
+    co2Graph.setTextColor(3, 0);
+    co2Graph.setTextDatum(CC_DATUM);
+    co2Graph.setTextWrap(false, false);
+
+    for (auto hgrid = 500; hgrid < HIGHEST_LEVEL_PPM; hgrid += 500)
+    {
+        const auto ypos = mapf(hgrid, LOWEST_LEVEL_PPM, HIGHEST_LEVEL_PPM, co2Graph.height(), 0);
+        co2Graph.writeFastHLine(0, ypos, co2Graph.width(), 1);
+        // co2Graph.drawNumber(hgrid, 20, ypos, &DejaVu12);
         co2Graph.drawNumber(hgrid, co2Graph.width() >> 1, ypos, &DejaVu12);
         // co2Graph.drawNumber(hgrid, co2Graph.width() - 20, ypos, &DejaVu12);
     }
@@ -137,9 +215,9 @@ static void updateHumidityHistory(const int32_t w, const int32_t h, const int32_
         const auto ypos = mapf(hgrid, LOWEST_LEVEL_HUMIDITY, HIGHEST_LEVEL_HUMIDITY, humidityGraph.height(), 0);
         humidityGraph.writeFastHLine(0, ypos, humidityGraph.width(), 1);
         // draw the values in white
-        //humidityGraph.drawNumber(hgrid, 20, ypos, &DejaVu12);
+        // humidityGraph.drawNumber(hgrid, 20, ypos, &DejaVu12);
         humidityGraph.drawNumber(hgrid, humidityGraph.width() >> 1, ypos, &DejaVu12);
-        //humidityGraph.drawNumber(hgrid, humidityGraph.width() - 20, ypos, &DejaVu12);
+        // humidityGraph.drawNumber(hgrid, humidityGraph.width() - 20, ypos, &DejaVu12);
     }
 
     humidityGraph.pushSprite(x, y);
@@ -237,14 +315,17 @@ static void updateTempValue(const int32_t w, const int32_t h, const int32_t x, c
 
     const auto xMiddle = tempValue.width() >> 1;
     tempValue.drawString("T", xMiddle, tempValue.height() >> 2, &DejaVu24);
-    tempValue.drawString("Celsius", xMiddle, tempValue.height() - (tempValue.height() >> 2), &DejaVu18);
+
+    tempValue.drawString("C", xMiddle, tempValue.height() - (tempValue.height() >> 2), &DejaVu18);
+    // tempValue.drawString("°C", xMiddle, tempValue.height() - (tempValue.height() >> 2));
+
     tempValue.pushSprite(x, y);
 }
 
 void displayTask(void *parameter)
 {
     display.init();
-    //display.setColor(0,100,100);
+    // display.setColor(0,100,100);
     display.clear(0x0000FF);
     display.setBrightness(130);
 
@@ -308,5 +389,20 @@ void displayTask(void *parameter)
         int32_t x, y;
         if (display.getTouch(&x, &y))
             display.fillRect(x - 2, y - 2, 5, 5, TFT_BLUE);
+
+        struct tm timeinfo = {0};
+        static struct tm prevTime = {0};
+        if (getLocalTime(&timeinfo, 0) && prevTime.tm_sec != timeinfo.tm_sec)
+        {
+            // TODO: first draw the time 88:88:88 in a very lightcolored font with the background overwrite
+            // then draw the current time over that - requires a sprite
+            char timestr[16];
+            strftime(timestr, sizeof(timestr), "%X", &timeinfo); // https://cplusplus.com/reference/ctime/strftime/
+            display.setTextColor(TFT_WHITE, TFT_BLUE);
+            display.setTextDatum(CC_DATUM);
+            display.setTextSize(2);
+            display.drawCentreString(timestr, display.width() >> 1, 365, &Font7);
+            prevTime = timeinfo;
+        }
     }
 }

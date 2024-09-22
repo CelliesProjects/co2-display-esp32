@@ -66,7 +66,7 @@ static void addItemToHistory(char *payload)
             history.push_front(item);
         }
     }
-    Serial.printf("%i items in history\n", history.size());
+    //Serial.printf("%i items in history\n", history.size());
 }
 
 static void parseAndBuildHistory(char *payload)
@@ -109,7 +109,7 @@ static void parseAndBuildHistory(char *payload)
 
         pch = strtok(NULL, "\n");
     }
-    Serial.printf("%i item(s) to history\n", cnt);
+    //Serial.printf("%i item(s) to history\n", cnt);
 }
 
 void processPayload(char *payload)
@@ -131,10 +131,10 @@ void processPayload(char *payload)
         displayMessage msg;
         msg.type = displayMessage::CO2_HISTORY;
         xQueueSend(displayQueue, &msg, portMAX_DELAY);
-        delay(1);
+        //delay(1);
         msg.type = displayMessage::HUMIDITY_HISTORY;
         xQueueSend(displayQueue, &msg, portMAX_DELAY);
-        delay(1);
+        //delay(1);
         msg.type = displayMessage::TEMPERATURE_HISTORY;
         xQueueSend(displayQueue, &msg, portMAX_DELAY);
         break;
@@ -145,10 +145,10 @@ void processPayload(char *payload)
         displayMessage msg;
         msg.type = displayMessage::CO2_HISTORY;
         xQueueSend(displayQueue, &msg, portMAX_DELAY);
-        delay(1);
+        //delay(1);
         msg.type = displayMessage::HUMIDITY_HISTORY;
         xQueueSend(displayQueue, &msg, portMAX_DELAY);
-        delay(1);
+        //delay(1);
         msg.type = displayMessage::TEMPERATURE_HISTORY;
         xQueueSend(displayQueue, &msg, portMAX_DELAY);
         break;
@@ -262,6 +262,8 @@ void setup()
         delay(10);
 
     Serial.printf("connected to %s\n", WIFI_SSID);
+
+    configTzTime(TIMEZONE, NTP_POOL);
 
     webSocket.begin(WEBSOCKET_SERVER, WEBSOCKET_PORT, WEBSOCKET_URL);
     webSocket.onEvent(webSocketEvent);
