@@ -82,16 +82,15 @@ static void updateCo2History_16b(const int32_t w, const int32_t h, const int32_t
     auto startMS = millis();
 
     static LGFX_Sprite co2Graph(&display);
-    co2Graph.setColorDepth(lgfx::rgb565_nonswapped);
+    co2Graph.setColorDepth(lgfx::rgb565_2Byte);
+    co2Graph.setPsram(true);
     co2Graph.createSprite(w, h);
+    co2Graph.setTextSize(1);
+    co2Graph.setTextWrap(false, false);
 
-    const auto GREEN = co2Graph.color565(0, 255, 0);
-    const auto AMBER = co2Graph.color565(127, 127, 0);
-    const auto RED = co2Graph.color565(255, 0, 0);
-
-    const auto GREEN_MAX_PPM = 500;
-    const auto AMBER_MAX_PPM = 1000;
-    const auto RED_MAX_PPM = 1500;
+    const auto GREEN_MAX_PPM = 480;
+    // const auto AMBER_MAX_PPM = 750;
+    const auto RED_MAX_PPM = 900;
 
     const auto BAR_WIDTH = 1;
     const auto GAP_WIDTH = 2;
@@ -99,8 +98,39 @@ static void updateCo2History_16b(const int32_t w, const int32_t h, const int32_t
     const auto LOWEST_LEVEL_PPM = 400;
     const auto HIGHEST_LEVEL_PPM = 2000;
 
-    const auto GREEN_MAX_Y = mapf(GREEN_MAX_PPM, HIGHEST_LEVEL_PPM, LOWEST_LEVEL_PPM, h, 0);
-    const auto RED_MAX_Y = mapf(RED_MAX_PPM, HIGHEST_LEVEL_PPM, LOWEST_LEVEL_PPM, h, 0);
+    const int GREEN_MAX_Y = mapf(GREEN_MAX_PPM, HIGHEST_LEVEL_PPM, LOWEST_LEVEL_PPM, 0, h);
+    const int RED_MAX_Y = mapf(RED_MAX_PPM, HIGHEST_LEVEL_PPM, LOWEST_LEVEL_PPM, 0, h);
+
+    // make a 16bit sprite as bar
+    LGFX_Sprite bar(&co2Graph);
+    bar.setColorDepth(lgfx::rgb565_2Byte);
+    bar.createSprite(1, h);
+
+    const auto GREEN = bar.color565(0, 255, 0);
+    const auto AMBER = bar.color565(127, 127, 0);
+    const auto RED = bar.color565(255, 0, 0);
+
+    // draw the red part
+    Serial.printf("RED_MAX_Y %i\n", RED_MAX_Y);
+    bar.drawLine(0,
+                 0,
+                 0,
+                 RED_MAX_Y,
+                 RED);
+    // draw the gradient from red to green
+    Serial.printf("GREEN_MAX_Y %i\n", GREEN_MAX_Y);
+
+    bar.drawGradientLine(0,
+                         RED_MAX_Y,
+                         0,
+                         GREEN_MAX_Y,
+                         RED, GREEN);
+    // draw the green part
+    bar.drawLine(0,
+                 GREEN_MAX_Y,
+                 0,
+                 h,
+                 GREEN);
 
     // actual data
     auto cnt = 0;
@@ -110,35 +140,36 @@ static void updateCo2History_16b(const int32_t w, const int32_t h, const int32_t
         const auto xpos = co2Graph.width() - cnt * (BAR_WIDTH + GAP_WIDTH);
 
         const auto TOP_POS = max(BAR_HEIGHT, co2Graph.height());
+
+        // change this to copy the bar.sprite pixel by pixel as currently we redraw a lot of effing pixels 
+
+        bar.pushSprite(xpos - BAR_WIDTH, 0);
+        // overwrite the too much
+        if (BAR_HEIGHT < h)
+            co2Graph.drawLine(xpos - BAR_WIDTH, 0, xpos - BAR_WIDTH, h - BAR_HEIGHT, co2Graph.color565(0,0,0));
+
         /*
-        // draw the red part
-            bar.drawFastVLine(0, 0, RED_MAX_Y, RED);
-            // draw the gradient from red to green
-            bar.drawGradientLine(0, RED_MAX_Y, 0, GREEN_MAX_Y, RED, GREEN);
-            // draw the green part
-            bar.drawFastVLine(0, GREEN_MAX_Y, 0, co2Graph.height());
-        */
-
-        co2Graph.fillRect(xpos - BAR_WIDTH,
-                          co2Graph.height(),
-                          BAR_WIDTH,
-                          -BAR_HEIGHT);
-
+                co2Graph.fillRect(xpos - BAR_WIDTH,
+                                  co2Graph.height(),
+                                  BAR_WIDTH,
+                                  -BAR_HEIGHT,
+                                  co2Graph.color565(255, 0, 0));
+         */
         if (xpos < 0)
             break;
         cnt++;
     }
 
     // grid
-    co2Graph.setTextColor(3, 0);
     co2Graph.setTextDatum(CC_DATUM);
     co2Graph.setTextWrap(false, false);
 
     for (auto hgrid = 500; hgrid < HIGHEST_LEVEL_PPM; hgrid += 500)
     {
         const auto ypos = mapf(hgrid, LOWEST_LEVEL_PPM, HIGHEST_LEVEL_PPM, co2Graph.height(), 0);
-        co2Graph.writeFastHLine(0, ypos, co2Graph.width(), 1);
+        co2Graph.writeFastHLine(0, ypos, co2Graph.width(), co2Graph.color565(0, 0, 128));
         // co2Graph.drawNumber(hgrid, 20, ypos, &DejaVu12);
+        co2Graph.setColor(co2Graph.color565(0, 0, 255));
         co2Graph.drawNumber(hgrid, co2Graph.width() >> 1, ypos, &DejaVu12);
         // co2Graph.drawNumber(hgrid, co2Graph.width() - 20, ypos, &DejaVu12);
     }
@@ -324,9 +355,9 @@ static void updateTempValue(const int32_t w, const int32_t h, const int32_t x, c
 
 void displayTask(void *parameter)
 {
+    display.setColorDepth(lgfx::rgb565_2Byte);
     display.init();
-    // display.setColor(0,100,100);
-    display.clear(0x0000FF);
+    display.clear(display.color565(0, 0, 255));
     display.setBrightness(130);
 
     while (1)
@@ -353,7 +384,7 @@ void displayTask(void *parameter)
 
             case displayMessage::CO2_HISTORY:
             {
-                updateCo2History(370, 110, 0, 0);
+                updateCo2History_16b(370, 110, 0, 0);
                 break;
             }
 
