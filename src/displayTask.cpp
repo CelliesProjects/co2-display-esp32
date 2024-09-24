@@ -30,62 +30,9 @@ static void updateCo2History(const int32_t w, const int32_t h, const int32_t x, 
     auto startMS = millis();
 
     static LGFX_Sprite co2Graph(&display);
-    co2Graph.setColorDepth(lgfx::palette_2bit);
-    co2Graph.createSprite(w, h);
-    co2Graph.setPaletteColor(1, 0, 0, 100);
-    co2Graph.setPaletteColor(2, 31, 255, 31);
-    co2Graph.setPaletteColor(3, 180, 180, 180);
-
-    const auto BAR_WIDTH = 1;
-    const auto GAP_WIDTH = 2;
-
-    const auto LOWEST_LEVEL_PPM = 400;
-    const auto HIGHEST_LEVEL_PPM = 2000;
-
-    // actual data
-    auto cnt = 0;
-    co2Graph.setColor(2); // here we could set the palette color based on the current co2 level
-    for (const auto &item : history)
-    {
-        const auto BAR_HEIGHT = mapf(item.co2, LOWEST_LEVEL_PPM, HIGHEST_LEVEL_PPM, 0, co2Graph.height());
-        const auto xpos = co2Graph.width() - cnt * (BAR_WIDTH + GAP_WIDTH);
-        co2Graph.fillRect(xpos - BAR_WIDTH,
-                          co2Graph.height(),
-                          BAR_WIDTH,
-                          -BAR_HEIGHT);
-        if (xpos < 0)
-            break;
-        cnt++;
-    }
-
-    // grid
-    co2Graph.setTextColor(3, 0);
-    co2Graph.setTextDatum(CC_DATUM);
-    co2Graph.setTextWrap(false, false);
-
-    for (auto hgrid = 500; hgrid < HIGHEST_LEVEL_PPM; hgrid += 500)
-    {
-        const auto ypos = mapf(hgrid, LOWEST_LEVEL_PPM, HIGHEST_LEVEL_PPM, co2Graph.height(), 0);
-        co2Graph.writeFastHLine(0, ypos, co2Graph.width(), 1);
-        // co2Graph.drawNumber(hgrid, 20, ypos, &DejaVu12);
-        co2Graph.drawNumber(hgrid, co2Graph.width() >> 1, ypos, &DejaVu12);
-        // co2Graph.drawNumber(hgrid, co2Graph.width() - 20, ypos, &DejaVu12);
-    }
-
-    co2Graph.pushSprite(x, y);
-    Serial.printf("pushed %i items to screen\n", cnt);
-    Serial.printf("done in %lums\n", millis() - startMS);
-}
-
-static void updateCo2History_16b(const int32_t w, const int32_t h, const int32_t x, const int32_t y)
-{
-    auto startMS = millis();
-
-    static LGFX_Sprite co2Graph(&display);
     co2Graph.setColorDepth(lgfx::rgb565_2Byte);
     co2Graph.setPsram(true);
     co2Graph.createSprite(w, h);
-    // co2Graph.getBuffer()
     co2Graph.setTextSize(1);
     co2Graph.setTextWrap(false, false);
 
@@ -103,49 +50,37 @@ static void updateCo2History_16b(const int32_t w, const int32_t h, const int32_t
     const int YELLOW_MAX_Y = mapf(YELLOW_MAX_PPM, HIGHEST_LEVEL_PPM, LOWEST_LEVEL_PPM, 0, h);
     const int RED_MAX_Y = mapf(RED_MAX_PPM, HIGHEST_LEVEL_PPM, LOWEST_LEVEL_PPM, 0, h);
 
-    // make a 16bit sprite as bar from which we copy the pixels later on
+    // a single bar -1 pixel wide- with the required gradients
     LGFX_Sprite bar(&co2Graph);
     bar.setColorDepth(lgfx::rgb565_2Byte);
     bar.createSprite(1, h);
 
-    const auto GREEN = bar.color565(0, 255, 0);
-    const auto YELLOW = bar.color565(255, 255, 0);
-    const auto RED = bar.color565(255, 0, 0);
+    constexpr const auto GREEN = bar.color565(0, 255, 0);
+    constexpr const auto YELLOW = bar.color565(255, 255, 0);
+    constexpr const auto RED = bar.color565(255, 0, 0);
 
-    // draw the red part
-    Serial.printf("RED_MAX_Y %i\n", RED_MAX_Y);
     bar.drawLine(0, 0, 0, RED_MAX_Y, RED);
-    // draw the gradient from red to yellow
-    Serial.printf("YELLOW_MAX_Y %i\n", YELLOW_MAX_Y);
     bar.drawGradientLine(0, RED_MAX_Y, 0, YELLOW_MAX_Y, RED, YELLOW);
-    // draw the gradient from yellow to green
-    Serial.printf("GREEN_MAX_Y %i\n", GREEN_MAX_Y);
     bar.drawGradientLine(0, YELLOW_MAX_Y, 0, GREEN_MAX_Y, YELLOW, GREEN);
-    // draw the green part
     bar.drawLine(0, GREEN_MAX_Y, 0, h, GREEN);
 
-    // actual data
+    // now we use the bar to copy to the screen as a sprite or as separate pixels
     auto cnt = 0;
     for (const auto &item : history)
     {
-        const int BAR_HEIGHT = mapf(item.co2, LOWEST_LEVEL_PPM, HIGHEST_LEVEL_PPM, 0, co2Graph.height());
+        const int BAR_HEIGHT = mapf(item.co2, LOWEST_LEVEL_PPM, HIGHEST_LEVEL_PPM, 0, h);
         const auto xpos = co2Graph.width() - cnt * (BAR_WIDTH + GAP_WIDTH);
-        /*
-                auto cnt = h;
-
-                while (cnt < min(h, BAR_HEIGHT))
-                {
-                    const auto color = bar.readPixelValue(0, cnt);
-                    co2Graph.drawPixel(xpos - BAR_WIDTH, cnt++, color);
-                }
-        */
-        // change this to copy the bar.sprite pixel by pixel as currently we redraw a lot of effing pixels
-
-        bar.pushSprite(xpos - BAR_WIDTH, 0);
-        // overwrite the too much
-        if (BAR_HEIGHT < h)
-            co2Graph.drawLine(xpos - BAR_WIDTH, 0, xpos - BAR_WIDTH, h - BAR_HEIGHT, co2Graph.color565(0, 0, 0));
-
+        if (BAR_HEIGHT >= h)
+            bar.pushSprite(xpos - BAR_WIDTH, 0);
+        else
+        {
+            auto cnt = h - BAR_HEIGHT;
+            while (cnt < h)
+            {
+                co2Graph.drawFastHLine(xpos - BAR_WIDTH, cnt, BAR_WIDTH, bar.readPixel(0, cnt));
+                cnt++;
+            }
+        }
         if (xpos < 0)
             break;
         cnt++;
@@ -154,7 +89,8 @@ static void updateCo2History_16b(const int32_t w, const int32_t h, const int32_t
     // grid
     co2Graph.setTextDatum(CC_DATUM);
     co2Graph.setTextWrap(false, false);
-    co2Graph.setTextColor(co2Graph.color565(128, 128, 128), 0);
+    co2Graph.setTextColor(co2Graph.color565(192, 192, 192), 0);
+    co2Graph.startWrite();
     for (auto hgrid = 500; hgrid < HIGHEST_LEVEL_PPM; hgrid += 500)
     {
         const auto ypos = mapf(hgrid, LOWEST_LEVEL_PPM, HIGHEST_LEVEL_PPM, co2Graph.height(), 0);
@@ -165,6 +101,8 @@ static void updateCo2History_16b(const int32_t w, const int32_t h, const int32_t
     }
 
     co2Graph.pushSprite(x, y);
+    co2Graph.endWrite();
+
     Serial.printf("pushed %i items to screen\n", cnt);
     Serial.printf("done in %lums\n", millis() - startMS);
 }
@@ -349,6 +287,7 @@ void displayTask(void *parameter)
     display.init();
     display.clear(display.color565(0, 0, 255));
     display.setBrightness(130);
+    display.setTextWrap(false, false);
 
     while (1)
     {
@@ -374,7 +313,7 @@ void displayTask(void *parameter)
 
             case displayMessage::CO2_HISTORY:
             {
-                updateCo2History_16b(370, 110, 0, 0);
+                updateCo2History(370, 110, 0, 0);
                 break;
             }
 
