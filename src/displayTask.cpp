@@ -1,6 +1,6 @@
 #include "displayTask.hpp"
 
-float mapf(float x, float in_min, float in_max, float out_min, float out_max)
+const float mapf(const float x, const float in_min, const float in_max, const float out_min, const float out_max)
 {
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
@@ -90,21 +90,14 @@ static void updateCo2History(const int32_t w, const int32_t h, const int32_t x, 
     co2Graph.setTextDatum(CC_DATUM);
     co2Graph.setTextWrap(false, false);
     co2Graph.setTextColor(co2Graph.color565(192, 192, 192), 0);
-    co2Graph.startWrite();
     for (auto hgrid = 500; hgrid < HIGHEST_LEVEL_PPM; hgrid += 500)
     {
         const auto ypos = mapf(hgrid, LOWEST_LEVEL_PPM, HIGHEST_LEVEL_PPM, co2Graph.height(), 0);
         co2Graph.writeFastHLine(0, ypos, co2Graph.width(), co2Graph.color565(0, 0, 64));
-        // co2Graph.drawNumber(hgrid, 20, ypos, &DejaVu12);
         co2Graph.drawNumber(hgrid, co2Graph.width() >> 1, ypos, &DejaVu12);
-        // co2Graph.drawNumber(hgrid, co2Graph.width() - 20, ypos, &DejaVu12);
     }
 
     co2Graph.pushSprite(x, y);
-    co2Graph.endWrite();
-
-    Serial.printf("pushed %i items to screen\n", cnt);
-    Serial.printf("done in %lums\n", millis() - startMS);
 }
 
 static void updateCo2Value(const int32_t w, const int32_t h, const int32_t x, const int32_t y, size_t newValue)
@@ -136,52 +129,73 @@ static void updateHumidityHistory(const int32_t w, const int32_t h, const int32_
     auto startMS = millis();
 
     static LGFX_Sprite humidityGraph(&display);
-    humidityGraph.setColorDepth(lgfx::palette_2bit);
+    humidityGraph.setColorDepth(lgfx::rgb565_2Byte);
+    humidityGraph.setPsram(true);
     humidityGraph.createSprite(w, h);
-    humidityGraph.setPaletteColor(1, 0, 0, 100);
-    humidityGraph.setPaletteColor(2, 31, 255, 31);
-    humidityGraph.setPaletteColor(3, 180, 180, 180);
+    humidityGraph.setTextSize(1);
+    humidityGraph.setTextWrap(false, false);
+
+    const auto RED_MAX_H = 70;
+    const auto GREEN_MAX_H = 45;
+    const auto WHITE_MAX_H = 25;
 
     const auto BAR_WIDTH = 1;
     const auto GAP_WIDTH = 2;
 
-    const auto LOWEST_LEVEL_HUMIDITY = 0;
-    const auto HIGHEST_LEVEL_HUMIDITY = 100;
+    const auto LOWEST_LEVEL_H = 15;
+    const auto HIGHEST_LEVEL_H = 85;
 
-    // actual data
+    const int RED_MAX_Y = mapf(RED_MAX_H, HIGHEST_LEVEL_H, LOWEST_LEVEL_H, 0, h);
+    const int GREEN_MAX_Y = mapf(GREEN_MAX_H, HIGHEST_LEVEL_H, LOWEST_LEVEL_H, 0, h);
+    const int WHITE_MAX_Y = mapf(WHITE_MAX_H, HIGHEST_LEVEL_H, LOWEST_LEVEL_H, 0, h);
+
+    // a single bar -1 pixel wide- with the required gradients
+    LGFX_Sprite bar(&humidityGraph);
+    bar.setColorDepth(lgfx::rgb565_2Byte);
+    bar.createSprite(1, h);
+
+    constexpr const auto WHITE = bar.color565(192, 192, 192);
+    constexpr const auto GREEN = bar.color565(0, 255, 0);
+    constexpr const auto RED = bar.color565(255, 0, 0);
+
+    bar.drawLine(0, 0, 0, RED_MAX_Y, RED);
+    bar.drawGradientLine(0, RED_MAX_Y, 0, GREEN_MAX_Y, RED, GREEN);
+    bar.drawGradientLine(0, GREEN_MAX_Y, 0, WHITE_MAX_Y, GREEN, WHITE);
+    bar.drawLine(0, WHITE_MAX_Y, 0, h, WHITE);
+
+    // now we use the bar to copy to the screen as a sprite or as separate pixels
     auto cnt = 0;
-    humidityGraph.setColor(2);
     for (const auto &item : history)
     {
-        const auto BAR_HEIGHT = mapf(item.humidity, LOWEST_LEVEL_HUMIDITY, HIGHEST_LEVEL_HUMIDITY, 0, humidityGraph.height());
+        const int BAR_HEIGHT = mapf(item.humidity, LOWEST_LEVEL_H, HIGHEST_LEVEL_H, 0, h);
         const auto xpos = humidityGraph.width() - cnt * (BAR_WIDTH + GAP_WIDTH);
-        humidityGraph.fillRect(xpos - BAR_WIDTH,
-                               humidityGraph.height(),
-                               BAR_WIDTH,
-                               -BAR_HEIGHT);
+        if (BAR_HEIGHT >= h)
+            bar.pushSprite(xpos - BAR_WIDTH, 0);
+        else
+        {
+            auto cnt = h - BAR_HEIGHT;
+            while (cnt < h)
+            {
+                humidityGraph.drawFastHLine(xpos - BAR_WIDTH, cnt, BAR_WIDTH, bar.readPixel(0, cnt));
+                cnt++;
+            }
+        }
         if (xpos < 0)
             break;
         cnt++;
     }
 
     // grid
-    humidityGraph.setTextColor(3, 0);
     humidityGraph.setTextDatum(CC_DATUM);
     humidityGraph.setTextWrap(false, false);
-
-    for (auto hgrid = 25; hgrid < HIGHEST_LEVEL_HUMIDITY; hgrid += 25)
+    humidityGraph.setTextColor(humidityGraph.color565(192, 192, 192), 0);
+    for (auto hgrid = 25; hgrid < HIGHEST_LEVEL_H; hgrid += 25)
     {
-        const auto ypos = mapf(hgrid, LOWEST_LEVEL_HUMIDITY, HIGHEST_LEVEL_HUMIDITY, humidityGraph.height(), 0);
-        humidityGraph.writeFastHLine(0, ypos, humidityGraph.width(), 1);
-        // draw the values in white
-        // humidityGraph.drawNumber(hgrid, 20, ypos, &DejaVu12);
+        const auto ypos = mapf(hgrid, LOWEST_LEVEL_H, HIGHEST_LEVEL_H, humidityGraph.height(), 0);
+        humidityGraph.writeFastHLine(0, ypos, humidityGraph.width(), humidityGraph.color565(0, 0, 64));
         humidityGraph.drawNumber(hgrid, humidityGraph.width() >> 1, ypos, &DejaVu12);
-        // humidityGraph.drawNumber(hgrid, humidityGraph.width() - 20, ypos, &DejaVu12);
     }
-
     humidityGraph.pushSprite(x, y);
-    Serial.printf("pushed %i items to screen\n", cnt);
-    Serial.printf("done in %lums\n", millis() - startMS);
 }
 
 static void updateHumidityValue(const int32_t w, const int32_t h, const int32_t x, const int32_t y, size_t newValue)
@@ -274,21 +288,13 @@ static void updateTempHistory(const int32_t w, const int32_t h, const int32_t x,
     tempGraph.setTextDatum(CC_DATUM);
     tempGraph.setTextWrap(false, false);
     tempGraph.setTextColor(tempGraph.color565(192, 192, 192), 0);
-    tempGraph.startWrite();
     for (auto hgrid = 16; hgrid < HIGHEST_LEVEL_T; hgrid += 4)
     {
         const auto ypos = mapf(hgrid, LOWEST_LEVEL_T, HIGHEST_LEVEL_T, tempGraph.height(), 0);
         tempGraph.writeFastHLine(0, ypos, tempGraph.width(), tempGraph.color565(0, 0, 64));
-        // tempGraph.drawNumber(hgrid, 20, ypos, &DejaVu12);
         tempGraph.drawNumber(hgrid, tempGraph.width() >> 1, ypos, &DejaVu12);
-        // tempGraph.drawNumber(hgrid, tempGraph.width() - 20, ypos, &DejaVu12);
     }
-
     tempGraph.pushSprite(x, y);
-    tempGraph.endWrite();
-
-    Serial.printf("pushed %i items to screen\n", cnt);
-    Serial.printf("done in %lums\n", millis() - startMS);
 }
 
 static void updateTempValue(const int32_t w, const int32_t h, const int32_t x, const int32_t y, float newValue)
@@ -321,6 +327,7 @@ void displayTask(void *parameter)
     display.clear(display.color565(0, 0, 255));
     display.setBrightness(130);
     display.setTextWrap(false, false);
+    display.setTextScroll(false);
 
     while (1)
     {
@@ -391,10 +398,10 @@ void displayTask(void *parameter)
             // then draw the current time over that - requires a sprite
             char timestr[16];
             strftime(timestr, sizeof(timestr), "%X", &timeinfo); // https://cplusplus.com/reference/ctime/strftime/
-            display.setTextColor(TFT_WHITE, TFT_BLUE);
+            display.setTextColor(TFT_WHITE, TFT_GREEN);
             display.setTextDatum(CC_DATUM);
-            display.setTextSize(2);
-            display.drawCentreString(timestr, display.width() >> 1, 365, &Font7);
+            display.setTextSize(1.6);
+            display.drawString(timestr, display.width() >> 1, 400, &Font7);
             prevTime = timeinfo;
         }
     }
