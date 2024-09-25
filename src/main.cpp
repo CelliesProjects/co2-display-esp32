@@ -247,7 +247,7 @@ void setup()
                                   NULL,
                                   4096,
                                   NULL,
-                                  10,
+                                  tskIDLE_PRIORITY + 1,
                                   &displayTaskHandle);
 
     if (taskResult != pdPASS)
