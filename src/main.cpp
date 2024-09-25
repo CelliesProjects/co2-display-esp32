@@ -66,7 +66,6 @@ static void addItemToHistory(char *payload)
             history.push_front(item);
         }
     }
-    //Serial.printf("%i items in history\n", history.size());
 }
 
 static void parseAndBuildHistory(char *payload)
@@ -109,7 +108,6 @@ static void parseAndBuildHistory(char *payload)
 
         pch = strtok(NULL, "\n");
     }
-    //Serial.printf("%i item(s) to history\n", cnt);
 }
 
 void processPayload(char *payload)
@@ -131,10 +129,8 @@ void processPayload(char *payload)
         displayMessage msg;
         msg.type = displayMessage::CO2_HISTORY;
         xQueueSend(displayQueue, &msg, portMAX_DELAY);
-        //delay(1);
         msg.type = displayMessage::HUMIDITY_HISTORY;
         xQueueSend(displayQueue, &msg, portMAX_DELAY);
-        //delay(1);
         msg.type = displayMessage::TEMPERATURE_HISTORY;
         xQueueSend(displayQueue, &msg, portMAX_DELAY);
         break;
@@ -145,10 +141,8 @@ void processPayload(char *payload)
         displayMessage msg;
         msg.type = displayMessage::CO2_HISTORY;
         xQueueSend(displayQueue, &msg, portMAX_DELAY);
-        //delay(1);
         msg.type = displayMessage::HUMIDITY_HISTORY;
         xQueueSend(displayQueue, &msg, portMAX_DELAY);
-        //delay(1);
         msg.type = displayMessage::TEMPERATURE_HISTORY;
         xQueueSend(displayQueue, &msg, portMAX_DELAY);
         break;
@@ -176,7 +170,6 @@ void processPayload(char *payload)
     {
         displayMessage msg;
         msg.type = displayMessage::TEMPERATURE;
-        // msg.sizeVal = (int)atof(&payload[2]);
         msg.floatVal = atof(&payload[2]);
         xQueueSend(displayQueue, &msg, portMAX_DELAY);
         break;
@@ -197,7 +190,7 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
         Serial.printf("[WSc] Disconnected!\n");
         break;
     case WStype_CONNECTED:
-        Serial.printf("[WSc] Connected to url: %s\n", payload);
+        Serial.printf("[WSc] Connected to ws://%s:%i%s\n", WEBSOCKET_SERVER, WEBSOCKET_PORT, WEBSOCKET_URL);
         lastWebsocketEventMS = millis();
         break;
     case WStype_TEXT:
@@ -279,5 +272,4 @@ void loop()
         lastWebsocketEventMS = millis();
     }
     webSocket.loop();
-    delay(2);
 }
