@@ -210,50 +210,83 @@ static void updateTempHistory(const int32_t w, const int32_t h, const int32_t x,
     auto startMS = millis();
 
     static LGFX_Sprite tempGraph(&display);
-    tempGraph.setColorDepth(lgfx::palette_2bit);
+    tempGraph.setColorDepth(lgfx::rgb565_2Byte);
+    tempGraph.setPsram(true);
     tempGraph.createSprite(w, h);
-    tempGraph.setPaletteColor(1, 0, 0, 100);
-    tempGraph.setPaletteColor(2, 31, 255, 31);
-    tempGraph.setPaletteColor(3, 130, 130, 130);
+    tempGraph.setTextSize(1);
+    tempGraph.setTextWrap(false, false);
+
+    const auto BLUE_MAX_T = 16;
+    const auto GREEN_MAX_T = 20;
+    const auto YELLOW_MAX_T = 22;
+    const auto RED_MAX_T = 25;
 
     const auto BAR_WIDTH = 1;
     const auto GAP_WIDTH = 2;
 
-    const auto LOWEST_TEMP_C = 15;
-    const auto HIGHEST_TEMP_C = 30;
+    const auto LOWEST_LEVEL_T = 15;
+    const auto HIGHEST_LEVEL_T = 28;
 
-    // actual data
+    const int BLUE_MAX_Y = mapf(BLUE_MAX_T, HIGHEST_LEVEL_T, LOWEST_LEVEL_T, 0, h);
+    const int GREEN_MAX_Y = mapf(GREEN_MAX_T, HIGHEST_LEVEL_T, LOWEST_LEVEL_T, 0, h);
+    const int YELLOW_MAX_Y = mapf(YELLOW_MAX_T, HIGHEST_LEVEL_T, LOWEST_LEVEL_T, 0, h);
+    const int RED_MAX_Y = mapf(RED_MAX_T, HIGHEST_LEVEL_T, LOWEST_LEVEL_T, 0, h);
+
+    // a single bar -1 pixel wide- with the required gradients
+    LGFX_Sprite bar(&tempGraph);
+    bar.setColorDepth(lgfx::rgb565_2Byte);
+    bar.createSprite(1, h);
+
+    constexpr const auto BLUE = bar.color565(95, 198, 224);
+    constexpr const auto GREEN = bar.color565(0, 255, 0);
+    constexpr const auto YELLOW = bar.color565(255, 255, 0);
+    constexpr const auto RED = bar.color565(255, 0, 0);
+
+    bar.drawLine(0, 0, 0, RED_MAX_Y, RED);
+    bar.drawGradientLine(0, RED_MAX_Y, 0, YELLOW_MAX_Y, RED, YELLOW);
+    bar.drawGradientLine(0, YELLOW_MAX_Y, 0, GREEN_MAX_Y, YELLOW, GREEN);
+    bar.drawGradientLine(0, GREEN_MAX_Y, 0, BLUE_MAX_Y, GREEN, BLUE);
+    bar.drawLine(0, BLUE_MAX_Y, 0, h, BLUE);
+
+    // now we use the bar to copy to the screen as a sprite or as separate pixels
     auto cnt = 0;
-    tempGraph.setColor(2);
     for (const auto &item : history)
     {
-        const auto BAR_HEIGHT = mapf(item.temp, LOWEST_TEMP_C, HIGHEST_TEMP_C, 0, tempGraph.height());
+        const int BAR_HEIGHT = mapf(item.temp, LOWEST_LEVEL_T, HIGHEST_LEVEL_T, 0, h);
         const auto xpos = tempGraph.width() - cnt * (BAR_WIDTH + GAP_WIDTH);
-        tempGraph.fillRect(xpos - BAR_WIDTH,
-                           tempGraph.height(),
-                           BAR_WIDTH,
-                           -BAR_HEIGHT);
+        if (BAR_HEIGHT >= h)
+            bar.pushSprite(xpos - BAR_WIDTH, 0);
+        else
+        {
+            auto cnt = h - BAR_HEIGHT;
+            while (cnt < h)
+            {
+                tempGraph.drawFastHLine(xpos - BAR_WIDTH, cnt, BAR_WIDTH, bar.readPixel(0, cnt));
+                cnt++;
+            }
+        }
         if (xpos < 0)
             break;
         cnt++;
     }
 
     // grid
-    tempGraph.setTextColor(3, 0);
-    // tempGraph.setTextDatum(BC_DATUM);
     tempGraph.setTextDatum(CC_DATUM);
     tempGraph.setTextWrap(false, false);
-
-    for (auto hgrid = 20; hgrid < HIGHEST_TEMP_C; hgrid += 5)
+    tempGraph.setTextColor(tempGraph.color565(192, 192, 192), 0);
+    tempGraph.startWrite();
+    for (auto hgrid = 16; hgrid < HIGHEST_LEVEL_T; hgrid += 4)
     {
-        const auto ypos = mapf(hgrid, LOWEST_TEMP_C, HIGHEST_TEMP_C, tempGraph.height(), 0);
-        tempGraph.writeFastHLine(0, ypos, tempGraph.width(), 1);
+        const auto ypos = mapf(hgrid, LOWEST_LEVEL_T, HIGHEST_LEVEL_T, tempGraph.height(), 0);
+        tempGraph.writeFastHLine(0, ypos, tempGraph.width(), tempGraph.color565(0, 0, 64));
         // tempGraph.drawNumber(hgrid, 20, ypos, &DejaVu12);
         tempGraph.drawNumber(hgrid, tempGraph.width() >> 1, ypos, &DejaVu12);
         // tempGraph.drawNumber(hgrid, tempGraph.width() - 20, ypos, &DejaVu12);
     }
 
     tempGraph.pushSprite(x, y);
+    tempGraph.endWrite();
+
     Serial.printf("pushed %i items to screen\n", cnt);
     Serial.printf("done in %lums\n", millis() - startMS);
 }
