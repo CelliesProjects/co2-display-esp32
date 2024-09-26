@@ -192,6 +192,8 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
     case WStype_CONNECTED:
         Serial.printf("[WSc] Connected to ws://%s:%i%s\n", WEBSOCKET_SERVER, WEBSOCKET_PORT, WEBSOCKET_URL);
         lastWebsocketEventMS = millis();
+        if (history.empty())
+            webSocket.sendTXT("G:\n");
         break;
     case WStype_TEXT:
         processPayload((char *)payload);
