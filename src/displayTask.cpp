@@ -27,30 +27,21 @@ const float mapf(const float x, const float in_min, const float in_max, const fl
 
 static void updateCo2History(const int32_t w, const int32_t h, const int32_t x, const int32_t y)
 {
-    auto startMS = millis();
-
     static LGFX_Sprite co2Graph(&display);
 
-    static bool allocated = false;
-    static auto allocatedH = 0;
-    static auto allocatedW = 0;
-    if (!allocated || (allocatedH != h || allocatedW != w))
+    if (co2Graph.height() != h || co2Graph.width() != w)
     {
         co2Graph.setColorDepth(lgfx::rgb565_2Byte);
         co2Graph.setPsram(true);
-        allocated = co2Graph.createSprite(w, h);
-        if (!allocated)
+        if (!co2Graph.createSprite(w, h))
         {
-            Serial.println("could not create sprite. halting and catching fire");
+            Serial.println("could not resize sprite. halting and catching fire");
             return;
         }
-        allocatedH = h;
-        allocatedW = w;
+
         co2Graph.setTextSize(1);
         co2Graph.setTextWrap(false, false);
     }
-
-    co2Graph.clear();
 
     const auto GREEN_MAX_PPM = 500;
     const auto YELLOW_MAX_PPM = 650;
@@ -63,10 +54,20 @@ static void updateCo2History(const int32_t w, const int32_t h, const int32_t x, 
     const int YELLOW_MAX_Y = mapf(YELLOW_MAX_PPM, HIGHEST_LEVEL_PPM, LOWEST_LEVEL_PPM, 0, h);
     const int RED_MAX_Y = mapf(RED_MAX_PPM, HIGHEST_LEVEL_PPM, LOWEST_LEVEL_PPM, 0, h);
 
+    co2Graph.clear();
+
     // a single bar -1 pixel wide- with the required gradients
-    LGFX_Sprite bar(&co2Graph);
-    bar.setColorDepth(lgfx::rgb565_2Byte);
-    bar.createSprite(1, h);
+    static LGFX_Sprite bar(&co2Graph);
+
+    if (bar.height() != h)
+    {
+        bar.setColorDepth(lgfx::rgb565_2Byte);
+        if (!bar.createSprite(1, h))
+        {
+            log_e("failed to (re)size sprite");
+            return;
+        };
+    }
 
     constexpr const auto GREEN = bar.color565(0, 255, 0);
     constexpr const auto YELLOW = bar.color565(255, 255, 0);
@@ -120,8 +121,21 @@ static void updateCo2History(const int32_t w, const int32_t h, const int32_t x, 
 static void updateCo2Value(const int32_t w, const int32_t h, const int32_t x, const int32_t y, size_t newValue)
 {
     static LGFX_Sprite co2Value(&display);
-    co2Value.setColorDepth(lgfx::palette_2bit);
-    co2Value.createSprite(w, h);
+
+    if (co2Value.height() != h || co2Value.width() != w)
+    {
+        log_i("(re)allocating a sprite");
+        co2Value.setColorDepth(lgfx::palette_2bit);
+        co2Value.setPsram(true);
+        if (!co2Value.createSprite(w, h))
+        {
+            Serial.println("could not resize sprite. halting and catching fire");
+            return;
+        }
+        co2Value.setTextSize(1);
+        co2Value.setTextWrap(false, false);
+    }
+
     co2Value.setPaletteColor(1, 0, 0, 255);
     co2Value.setPaletteColor(2, 31, 255, 31);
     co2Value.setPaletteColor(3, 180, 180, 180);
@@ -146,21 +160,15 @@ static void updateHumidityHistory(const int32_t w, const int32_t h, const int32_
 
     static LGFX_Sprite humidityGraph(&display);
 
-    static bool allocated = false;
-    static auto allocatedH = 0;
-    static auto allocatedW = 0;
-    if (!allocated || (allocatedH != h || allocatedW != w))
+    if (humidityGraph.height() != h || humidityGraph.width() != w)
     {
         humidityGraph.setColorDepth(lgfx::rgb565_2Byte);
         humidityGraph.setPsram(true);
-        allocated = humidityGraph.createSprite(w, h);
-        if (!allocated)
+        if (!humidityGraph.createSprite(w, h))
         {
-            Serial.println("could not create sprite. halting and catching fire");
+            Serial.println("could not resize sprite. halting and catching fire");
             return;
         }
-        allocatedH = h;
-        allocatedW = w;
         humidityGraph.setTextSize(1);
         humidityGraph.setTextWrap(false, false);
     }
@@ -179,9 +187,17 @@ static void updateHumidityHistory(const int32_t w, const int32_t h, const int32_
     const int WHITE_MAX_Y = mapf(WHITE_MAX_H, HIGHEST_LEVEL_H, LOWEST_LEVEL_H, 0, h);
 
     // a single bar -1 pixel wide- with the required gradients
-    LGFX_Sprite bar(&humidityGraph);
-    bar.setColorDepth(lgfx::rgb565_2Byte);
-    bar.createSprite(1, h);
+    static LGFX_Sprite bar(&humidityGraph);
+
+    if (bar.height() != h)
+    {
+        bar.setColorDepth(lgfx::rgb565_2Byte);
+        if (!bar.createSprite(1, h))
+        {
+            log_e("failed to (re)size sprite");
+            return;
+        };
+    }
 
     constexpr const auto WHITE = bar.color565(192, 192, 192);
     constexpr const auto GREEN = bar.color565(0, 255, 0);
@@ -234,8 +250,21 @@ static void updateHumidityHistory(const int32_t w, const int32_t h, const int32_
 static void updateHumidityValue(const int32_t w, const int32_t h, const int32_t x, const int32_t y, size_t newValue)
 {
     static LGFX_Sprite humidityValue(&display);
-    humidityValue.setColorDepth(lgfx::palette_2bit);
-    humidityValue.createSprite(w, h);
+
+    if (humidityValue.height() != h || humidityValue.width() != w)
+    {
+        humidityValue.setColorDepth(lgfx::palette_2bit);
+        humidityValue.setPsram(true);
+        if (!humidityValue.createSprite(w, h))
+        {
+            Serial.println("could not resize sprite. halting and catching fire");
+            return;
+        }
+
+        humidityValue.setTextSize(1);
+        humidityValue.setTextWrap(false, false);
+    }
+
     humidityValue.setPaletteColor(1, 0, 0, 255);
     humidityValue.setPaletteColor(2, 31, 255, 31);
     humidityValue.setPaletteColor(3, 180, 180, 180);
@@ -258,26 +287,21 @@ static void updateTempHistory(const int32_t w, const int32_t h, const int32_t x,
 
     static LGFX_Sprite tempGraph(&display);
 
-    static bool allocated = false;
-    static auto allocatedH = 0;
-    static auto allocatedW = 0;
-    if (!allocated || (allocatedH != h || allocatedW != w))
+    if (tempGraph.height() != h || tempGraph.width() != w)
     {
         tempGraph.setColorDepth(lgfx::rgb565_2Byte);
         tempGraph.setPsram(true);
-        allocated = tempGraph.createSprite(w, h);
-        if (!allocated)
+        if (!tempGraph.createSprite(w, h))
         {
-            Serial.println("could not create sprite. halting and catching fire");
+            Serial.println("could not resize sprite. halting and catching fire");
             return;
         }
-        allocatedH = h;
-        allocatedW = w;
+
         tempGraph.setTextSize(1);
         tempGraph.setTextWrap(false, false);
     }
 
-    tempGraph.clear(tempGraph.color565(random(255), random(255), random(255)));
+    tempGraph.clear();
 
     const auto BLUE_MAX_T = 16;
     const auto GREEN_MAX_T = 20;
@@ -293,9 +317,17 @@ static void updateTempHistory(const int32_t w, const int32_t h, const int32_t x,
     const int RED_MAX_Y = mapf(RED_MAX_T, HIGHEST_LEVEL_T, LOWEST_LEVEL_T, 0, h);
 
     // a single bar -1 pixel wide- with the required gradients
-    LGFX_Sprite bar(&tempGraph);
-    bar.setColorDepth(lgfx::rgb565_2Byte);
-    bar.createSprite(1, h);
+    static LGFX_Sprite bar(&tempGraph);
+
+    if (bar.height() != h)
+    {
+        bar.setColorDepth(lgfx::rgb565_2Byte);
+        if (!bar.createSprite(1, h))
+        {
+            log_e("failed to (re)size sprite");
+            return;
+        };
+    }
 
     constexpr const auto BLUE = bar.color565(95, 198, 224);
     constexpr const auto GREEN = bar.color565(0, 255, 0);
@@ -344,14 +376,31 @@ static void updateTempHistory(const int32_t w, const int32_t h, const int32_t x,
         tempGraph.writeFastHLine(0, ypos, tempGraph.width(), tempGraph.color565(0, 0, 64));
         tempGraph.drawNumber(hgrid, tempGraph.width() >> 1, ypos, &DejaVu12);
     }
+    const auto pushTimeMS = millis();
     tempGraph.pushSprite(x, y);
+
+    log_v("push time %lums", millis() - pushTimeMS);
+    log_v("total: %i T values in %lums", cnt, millis() - startMS);
 }
 
 static void updateTempValue(const int32_t w, const int32_t h, const int32_t x, const int32_t y, float newValue)
 {
     static LGFX_Sprite tempValue(&display);
-    tempValue.setColorDepth(lgfx::palette_2bit);
-    tempValue.createSprite(w, h);
+
+    if (tempValue.height() != h || tempValue.width() != w)
+    {
+        tempValue.setColorDepth(lgfx::palette_2bit);
+        tempValue.setPsram(true);
+        if (!tempValue.createSprite(w, h))
+        {
+            Serial.println("could not resize sprite. halting and catching fire");
+            return;
+        }
+
+        tempValue.setTextSize(1);
+        tempValue.setTextWrap(false, false);
+    }
+
     tempValue.setPaletteColor(1, 0, 0, 255);
     tempValue.setPaletteColor(2, 31, 255, 31);
     tempValue.setPaletteColor(3, 180, 180, 180);
