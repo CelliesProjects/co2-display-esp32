@@ -12,6 +12,8 @@
 
 #define HISTORY_MAX_ITEMS 180
 
+#define DISPLAY_QUEUE_MAX_ITEMS 1
+
 #include "secrets.h" /* untracked file containing wifi credentials */
 #include "storageStruct.hpp"
 #include "displayMessageStruct.hpp"
@@ -22,6 +24,8 @@ static TaskHandle_t displayTaskHandle = nullptr;
 
 static WebSocketsClient webSocket;
 std::list<struct storageStruct> history;
+
+static auto lastWebsocketEventMS = 0;
 
 /*
    these are the tags for messages:
@@ -129,8 +133,10 @@ void processPayload(char *payload)
         displayMessage msg;
         msg.type = displayMessage::CO2_HISTORY;
         xQueueSend(displayQueue, &msg, portMAX_DELAY);
+
         msg.type = displayMessage::HUMIDITY_HISTORY;
         xQueueSend(displayQueue, &msg, portMAX_DELAY);
+
         msg.type = displayMessage::TEMPERATURE_HISTORY;
         xQueueSend(displayQueue, &msg, portMAX_DELAY);
         break;
@@ -141,8 +147,10 @@ void processPayload(char *payload)
         displayMessage msg;
         msg.type = displayMessage::CO2_HISTORY;
         xQueueSend(displayQueue, &msg, portMAX_DELAY);
+
         msg.type = displayMessage::HUMIDITY_HISTORY;
         xQueueSend(displayQueue, &msg, portMAX_DELAY);
+
         msg.type = displayMessage::TEMPERATURE_HISTORY;
         xQueueSend(displayQueue, &msg, portMAX_DELAY);
         break;
@@ -180,8 +188,6 @@ void processPayload(char *payload)
     }
 }
 
-static auto lastWebsocketEventMS = 0;
-
 void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
 {
     switch (type)
@@ -191,9 +197,9 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
         break;
     case WStype_CONNECTED:
         Serial.printf("[WSc] Connected to ws://%s:%i%s\n", WEBSOCKET_SERVER, WEBSOCKET_PORT, WEBSOCKET_URL);
-        lastWebsocketEventMS = millis();
         if (history.empty())
             webSocket.sendTXT("G:\n");
+        lastWebsocketEventMS = millis();
         break;
     case WStype_TEXT:
         processPayload((char *)payload);
@@ -230,7 +236,7 @@ void setup()
     else
         Serial.println("SD card mounted");
 
-    displayQueue = xQueueCreate(5, sizeof(struct displayMessage));
+    displayQueue = xQueueCreate(DISPLAY_QUEUE_MAX_ITEMS, sizeof(struct displayMessage));
     if (!displayQueue)
     {
         log_e("FATAL error! could not create display queue. System HALTED!");

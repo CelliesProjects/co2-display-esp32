@@ -30,9 +30,15 @@ static void updateCo2History(const int32_t w, const int32_t h, const int32_t x, 
     auto startMS = millis();
 
     static LGFX_Sprite co2Graph(&display);
+
     co2Graph.setColorDepth(lgfx::rgb565_2Byte);
     co2Graph.setPsram(true);
-    co2Graph.createSprite(w, h);
+    if (!co2Graph.createSprite(w, h))
+    {
+        Serial.println("could not create sprite. exiting");
+        return;
+    }
+
     co2Graph.setTextSize(1);
     co2Graph.setTextWrap(false, false);
 
@@ -40,8 +46,8 @@ static void updateCo2History(const int32_t w, const int32_t h, const int32_t x, 
     const auto YELLOW_MAX_PPM = 650;
     const auto RED_MAX_PPM = 1000;
 
-    const auto BAR_WIDTH = 1;
-    const auto GAP_WIDTH = 2;
+    // const auto BAR_WIDTH = 1;
+    // const auto GAP_WIDTH = 2;
 
     const auto LOWEST_LEVEL_PPM = 400;
     const auto HIGHEST_LEVEL_PPM = 2000;
@@ -71,7 +77,11 @@ static void updateCo2History(const int32_t w, const int32_t h, const int32_t x, 
         const int BAR_HEIGHT = mapf(item.co2, LOWEST_LEVEL_PPM, HIGHEST_LEVEL_PPM, 0, h);
         const auto xpos = co2Graph.width() - cnt * (BAR_WIDTH + GAP_WIDTH);
         if (BAR_HEIGHT >= h)
-            bar.pushSprite(xpos - BAR_WIDTH, 0);
+        {
+            auto cnt = 0;
+            while (cnt < BAR_WIDTH)
+                bar.pushSprite(xpos - BAR_WIDTH + cnt++, 0);
+        }
         else
         {
             auto cnt = h - BAR_HEIGHT;
@@ -131,7 +141,11 @@ static void updateHumidityHistory(const int32_t w, const int32_t h, const int32_
     static LGFX_Sprite humidityGraph(&display);
     humidityGraph.setColorDepth(lgfx::rgb565_2Byte);
     humidityGraph.setPsram(true);
-    humidityGraph.createSprite(w, h);
+    if (!humidityGraph.createSprite(w, h))
+    {
+        Serial.println("could not create sprite. exiting");
+        return;
+    }
     humidityGraph.setTextSize(1);
     humidityGraph.setTextWrap(false, false);
 
@@ -139,8 +153,8 @@ static void updateHumidityHistory(const int32_t w, const int32_t h, const int32_
     const auto GREEN_MAX_H = 45;
     const auto WHITE_MAX_H = 25;
 
-    const auto BAR_WIDTH = 1;
-    const auto GAP_WIDTH = 2;
+    // const auto BAR_WIDTH = 1;
+    // const auto GAP_WIDTH = 2;
 
     const auto LOWEST_LEVEL_H = 15;
     const auto HIGHEST_LEVEL_H = 85;
@@ -170,7 +184,11 @@ static void updateHumidityHistory(const int32_t w, const int32_t h, const int32_
         const int BAR_HEIGHT = mapf(item.humidity, LOWEST_LEVEL_H, HIGHEST_LEVEL_H, 0, h);
         const auto xpos = humidityGraph.width() - cnt * (BAR_WIDTH + GAP_WIDTH);
         if (BAR_HEIGHT >= h)
-            bar.pushSprite(xpos - BAR_WIDTH, 0);
+        {
+            auto cnt = 0;
+            while (cnt < BAR_WIDTH)
+                bar.pushSprite(xpos - BAR_WIDTH + cnt++, 0);
+        }
         else
         {
             auto cnt = h - BAR_HEIGHT;
@@ -226,7 +244,11 @@ static void updateTempHistory(const int32_t w, const int32_t h, const int32_t x,
     static LGFX_Sprite tempGraph(&display);
     tempGraph.setColorDepth(lgfx::rgb565_2Byte);
     tempGraph.setPsram(true);
-    tempGraph.createSprite(w, h);
+    if (!tempGraph.createSprite(w, h))
+    {
+        Serial.println("could not create sprite. exiting");
+        return;
+    }
     tempGraph.setTextSize(1);
     tempGraph.setTextWrap(false, false);
 
@@ -235,8 +257,8 @@ static void updateTempHistory(const int32_t w, const int32_t h, const int32_t x,
     const auto YELLOW_MAX_T = 22;
     const auto RED_MAX_T = 25;
 
-    const auto BAR_WIDTH = 1;
-    const auto GAP_WIDTH = 2;
+    // const auto BAR_WIDTH = 1;
+    // const auto GAP_WIDTH = 2;
 
     const auto LOWEST_LEVEL_T = 15;
     const auto HIGHEST_LEVEL_T = 28;
@@ -269,7 +291,11 @@ static void updateTempHistory(const int32_t w, const int32_t h, const int32_t x,
         const int BAR_HEIGHT = mapf(item.temp, LOWEST_LEVEL_T, HIGHEST_LEVEL_T, 0, h);
         const auto xpos = tempGraph.width() - cnt * (BAR_WIDTH + GAP_WIDTH);
         if (BAR_HEIGHT >= h)
-            bar.pushSprite(xpos - BAR_WIDTH, 0);
+        {
+            auto cnt = 0;
+            while (cnt < BAR_WIDTH)
+                bar.pushSprite(xpos - BAR_WIDTH + cnt++, 0);
+        }
         else
         {
             auto cnt = h - BAR_HEIGHT;
@@ -398,11 +424,12 @@ void displayTask(void *parameter)
             // then draw the current time over that - requires a sprite
             char timestr[16];
             strftime(timestr, sizeof(timestr), "%X", &timeinfo); // https://cplusplus.com/reference/ctime/strftime/
-            display.setTextColor(TFT_WHITE, TFT_GREEN);
+            display.setTextColor(display.color565(253, 32, 32), TFT_BLUE);
             display.setTextDatum(CC_DATUM);
             display.setTextSize(1.6);
             display.drawString(timestr, display.width() >> 1, 400, &Font7);
             prevTime = timeinfo;
         }
+        yield();
     }
 }
