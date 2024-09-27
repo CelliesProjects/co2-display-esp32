@@ -118,7 +118,7 @@ void processPayload(char *payload)
 {
     if (payload[1] != ':')
     {
-        Serial.printf("payload contains no : \n%s", payload);
+        Serial.printf("payload contains no separator ':' \n%s", payload);
         return;
     }
 
