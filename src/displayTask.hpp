@@ -13,6 +13,9 @@
 static const auto BAR_WIDTH = 2;
 static const auto GAP_WIDTH = 2;
 
+static const auto GRAPH_WIDTH = 370;
+static const auto GRAPH_HEIGHT = 110;
+
 extern std::list<struct storageStruct> history;
 
 static LGFX display;

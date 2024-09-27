@@ -31,23 +31,30 @@ static void updateCo2History(const int32_t w, const int32_t h, const int32_t x, 
 
     static LGFX_Sprite co2Graph(&display);
 
-    co2Graph.setColorDepth(lgfx::rgb565_2Byte);
-    co2Graph.setPsram(true);
-    if (!co2Graph.createSprite(w, h))
+    static bool allocated = false;
+    static auto allocatedH = 0;
+    static auto allocatedW = 0;
+    if (!allocated || (allocatedH != h || allocatedW != w))
     {
-        Serial.println("could not create sprite. exiting");
-        return;
+        co2Graph.setColorDepth(lgfx::rgb565_2Byte);
+        co2Graph.setPsram(true);
+        allocated = co2Graph.createSprite(w, h);
+        if (!allocated)
+        {
+            Serial.println("could not create sprite. halting and catching fire");
+            return;
+        }
+        allocatedH = h;
+        allocatedW = w;
+        co2Graph.setTextSize(1);
+        co2Graph.setTextWrap(false, false);
     }
 
-    co2Graph.setTextSize(1);
-    co2Graph.setTextWrap(false, false);
+    co2Graph.clear();
 
     const auto GREEN_MAX_PPM = 500;
     const auto YELLOW_MAX_PPM = 650;
     const auto RED_MAX_PPM = 1000;
-
-    // const auto BAR_WIDTH = 1;
-    // const auto GAP_WIDTH = 2;
 
     const auto LOWEST_LEVEL_PPM = 400;
     const auto HIGHEST_LEVEL_PPM = 2000;
@@ -119,7 +126,6 @@ static void updateCo2Value(const int32_t w, const int32_t h, const int32_t x, co
     co2Value.setPaletteColor(2, 31, 255, 31);
     co2Value.setPaletteColor(3, 180, 180, 180);
     co2Value.fillScreen(1);
-
     co2Value.setTextDatum(CC_DATUM);
     co2Value.setTextColor(2);
     co2Value.drawNumber(newValue, co2Value.width() >> 1, (co2Value.height() >> 1) + 4, &DejaVu40);
@@ -139,22 +145,31 @@ static void updateHumidityHistory(const int32_t w, const int32_t h, const int32_
     auto startMS = millis();
 
     static LGFX_Sprite humidityGraph(&display);
-    humidityGraph.setColorDepth(lgfx::rgb565_2Byte);
-    humidityGraph.setPsram(true);
-    if (!humidityGraph.createSprite(w, h))
+
+    static bool allocated = false;
+    static auto allocatedH = 0;
+    static auto allocatedW = 0;
+    if (!allocated || (allocatedH != h || allocatedW != w))
     {
-        Serial.println("could not create sprite. exiting");
-        return;
+        humidityGraph.setColorDepth(lgfx::rgb565_2Byte);
+        humidityGraph.setPsram(true);
+        allocated = humidityGraph.createSprite(w, h);
+        if (!allocated)
+        {
+            Serial.println("could not create sprite. halting and catching fire");
+            return;
+        }
+        allocatedH = h;
+        allocatedW = w;
+        humidityGraph.setTextSize(1);
+        humidityGraph.setTextWrap(false, false);
     }
-    humidityGraph.setTextSize(1);
-    humidityGraph.setTextWrap(false, false);
+
+    humidityGraph.clear();
 
     const auto RED_MAX_H = 70;
     const auto GREEN_MAX_H = 45;
     const auto WHITE_MAX_H = 25;
-
-    // const auto BAR_WIDTH = 1;
-    // const auto GAP_WIDTH = 2;
 
     const auto LOWEST_LEVEL_H = 15;
     const auto HIGHEST_LEVEL_H = 85;
@@ -242,23 +257,32 @@ static void updateTempHistory(const int32_t w, const int32_t h, const int32_t x,
     auto startMS = millis();
 
     static LGFX_Sprite tempGraph(&display);
-    tempGraph.setColorDepth(lgfx::rgb565_2Byte);
-    tempGraph.setPsram(true);
-    if (!tempGraph.createSprite(w, h))
+
+    static bool allocated = false;
+    static auto allocatedH = 0;
+    static auto allocatedW = 0;
+    if (!allocated || (allocatedH != h || allocatedW != w))
     {
-        Serial.println("could not create sprite. exiting");
-        return;
+        tempGraph.setColorDepth(lgfx::rgb565_2Byte);
+        tempGraph.setPsram(true);
+        allocated = tempGraph.createSprite(w, h);
+        if (!allocated)
+        {
+            Serial.println("could not create sprite. halting and catching fire");
+            return;
+        }
+        allocatedH = h;
+        allocatedW = w;
+        tempGraph.setTextSize(1);
+        tempGraph.setTextWrap(false, false);
     }
-    tempGraph.setTextSize(1);
-    tempGraph.setTextWrap(false, false);
+
+    tempGraph.clear(tempGraph.color565(random(255), random(255), random(255)));
 
     const auto BLUE_MAX_T = 16;
     const auto GREEN_MAX_T = 20;
     const auto YELLOW_MAX_T = 22;
     const auto RED_MAX_T = 25;
-
-    // const auto BAR_WIDTH = 1;
-    // const auto GAP_WIDTH = 2;
 
     const auto LOWEST_LEVEL_T = 15;
     const auto HIGHEST_LEVEL_T = 28;
@@ -354,7 +378,77 @@ void displayTask(void *parameter)
     display.setBrightness(130);
     display.setTextWrap(false, false);
     display.setTextScroll(false);
+    /*
+        // setup the graph sprites
+        tempGraph.setColorDepth(lgfx::rgb565_2Byte);
+        tempGraph.setPsram(true);
+        if (!tempGraph.createSprite(GRAPH_WIDTH, GRAPH_HEIGHT))
+        {
+            Serial.println("could not create sprite. halting");
+            while (1)
+                delay(10);
+        }
+        tempGraph.setTextSize(1);
+        tempGraph.setTextWrap(false, false);
 
+        humidityGraph.setColorDepth(lgfx::rgb565_2Byte);
+        humidityGraph.setPsram(true);
+        if (!humidityGraph.createSprite(GRAPH_WIDTH, GRAPH_HEIGHT))
+        {
+            Serial.println("could not create sprite. halting");
+            while (1)
+                delay(10);
+        }
+        humidityGraph.setTextSize(1);
+        humidityGraph.setTextWrap(false, false);
+
+        co2Graph.setColorDepth(lgfx::rgb565_2Byte);
+        co2Graph.setPsram(true);
+        if (!co2Graph.createSprite(GRAPH_WIDTH, GRAPH_HEIGHT))
+        {
+            Serial.println("could not create sprite. halting");
+            while (1)
+                delay(10);
+        }
+        co2Graph.setTextSize(1);
+        co2Graph.setTextWrap(false, false);
+
+        // value sprites
+        co2Value.setColorDepth(lgfx::palette_2bit);
+        co2Value.setPsram(false);
+        if (!co2Value.createSprite(GRAPH_WIDTH, GRAPH_HEIGHT))
+        {
+            log_i("could not create sprite. halting");
+            while (1)
+                delay(10);
+        }
+        co2Value.setPaletteColor(1, 0, 0, 255);
+        co2Value.setPaletteColor(2, 31, 255, 31);
+        co2Value.setPaletteColor(3, 180, 180, 180);
+
+
+        humidityValue.setColorDepth(lgfx::palette_2bit);
+        if (!humidityValue.createSprite(GRAPH_WIDTH, GRAPH_HEIGHT))
+        {
+            Serial.println("could not create sprite. halting");
+            while (1)
+                delay(10);
+        }
+        humidityValue.setPaletteColor(1, 0, 0, 255);
+        humidityValue.setPaletteColor(2, 31, 255, 31);
+        humidityValue.setPaletteColor(3, 180, 180, 180);
+
+        tempValue.setColorDepth(lgfx::palette_2bit);
+        if (!tempValue.createSprite(GRAPH_WIDTH, GRAPH_HEIGHT))
+        {
+            Serial.println("could not create sprite. halting");
+            while (1)
+                delay(10);
+        }
+        tempValue.setPaletteColor(1, 0, 0, 255);
+        tempValue.setPaletteColor(2, 31, 255, 31);
+        tempValue.setPaletteColor(3, 180, 180, 180);
+    */
     while (1)
     {
         static struct displayMessage msg;
