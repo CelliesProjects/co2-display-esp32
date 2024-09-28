@@ -150,8 +150,8 @@ static void updateCo2Value(const int32_t w, const int32_t h, const int32_t x, co
     const auto xMiddle = co2Value.width() >> 1;
     const auto superScriptOffset = 17;
 
-    co2Value.drawString("CO", xMiddle - 5, co2Value.height() >> 2, &DejaVu24);
-    co2Value.drawString("2", xMiddle + superScriptOffset, (co2Value.height() >> 2) - 10, &DejaVu12);
+    co2Value.drawString("CO²", xMiddle, co2Value.height() >> 2, &DejaVu24Modded);
+    //co2Value.drawString("2", xMiddle + superScriptOffset, (co2Value.height() >> 2) - 10, &DejaVu12);
     co2Value.drawString("ppm", xMiddle, co2Value.height() - (co2Value.height() >> 2), &DejaVu18);
 
     co2Value.pushSprite(x, y);
@@ -419,8 +419,7 @@ static void updateTempValue(const int32_t w, const int32_t h, const int32_t x, c
     const auto xMiddle = tempValue.width() >> 1;
     tempValue.drawString("T", xMiddle, tempValue.height() >> 2, &DejaVu24);
 
-    tempValue.drawString("C", xMiddle, tempValue.height() - (tempValue.height() >> 2), &DejaVu18);
-    // tempValue.drawString("°C", xMiddle, tempValue.height() - (tempValue.height() >> 2));
+    tempValue.drawString("°C", xMiddle, tempValue.height() - (tempValue.height() >> 2), &DejaVu24Modded);
 
     tempValue.pushSprite(x, y);
 }

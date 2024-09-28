@@ -10,6 +10,8 @@
 #include "LGFX_ESP32S3_RGB_GUITION_480x480_ST7701s_GT911.h"
 #include <LovyanGFX.hpp>
 
+#include "fonts/DejaVu24-modded.h" /* contains percent sign ans superscript 2*/
+
 static const auto BAR_WIDTH = 2;
 static const auto GAP_WIDTH = 2;
 
