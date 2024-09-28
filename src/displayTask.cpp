@@ -27,6 +27,8 @@ const float mapf(const float x, const float in_min, const float in_max, const fl
 
 static void updateCo2History(const int32_t w, const int32_t h, const int32_t x, const int32_t y)
 {
+    auto const START_MS = millis();
+
     static LGFX_Sprite co2Graph(&display);
 
     if (co2Graph.height() != h || co2Graph.width() != w)
@@ -59,6 +61,10 @@ static void updateCo2History(const int32_t w, const int32_t h, const int32_t x, 
     // a single bar -1 pixel wide- with the required gradients
     static LGFX_Sprite bar(&co2Graph);
 
+    constexpr const auto GREEN = bar.color565(0, 255, 0);
+    constexpr const auto YELLOW = bar.color565(255, 255, 0);
+    constexpr const auto RED = bar.color565(255, 0, 0);
+
     if (bar.height() != h)
     {
         bar.setColorDepth(lgfx::rgb565_2Byte);
@@ -67,23 +73,19 @@ static void updateCo2History(const int32_t w, const int32_t h, const int32_t x, 
             log_e("failed to (re)size sprite");
             return;
         };
+
+        bar.drawLine(0, 0, 0, RED_MAX_Y, RED);
+        bar.drawGradientLine(0, RED_MAX_Y, 0, YELLOW_MAX_Y, RED, YELLOW);
+        bar.drawGradientLine(0, YELLOW_MAX_Y, 0, GREEN_MAX_Y, YELLOW, GREEN);
+        bar.drawLine(0, GREEN_MAX_Y, 0, h, GREEN);
     }
 
-    constexpr const auto GREEN = bar.color565(0, 255, 0);
-    constexpr const auto YELLOW = bar.color565(255, 255, 0);
-    constexpr const auto RED = bar.color565(255, 0, 0);
-
-    bar.drawLine(0, 0, 0, RED_MAX_Y, RED);
-    bar.drawGradientLine(0, RED_MAX_Y, 0, YELLOW_MAX_Y, RED, YELLOW);
-    bar.drawGradientLine(0, YELLOW_MAX_Y, 0, GREEN_MAX_Y, YELLOW, GREEN);
-    bar.drawLine(0, GREEN_MAX_Y, 0, h, GREEN);
-
     // now we use the bar to copy to the screen as a sprite or as separate pixels
-    auto cnt = 0;
+    auto currentItem = 0;
     for (const auto &item : history)
     {
         const int BAR_HEIGHT = mapf(item.co2, LOWEST_LEVEL_PPM, HIGHEST_LEVEL_PPM, 0, h);
-        const auto xpos = co2Graph.width() - cnt * (BAR_WIDTH + GAP_WIDTH);
+        const auto xpos = co2Graph.width() - currentItem * (BAR_WIDTH + GAP_WIDTH);
         if (BAR_HEIGHT >= h)
         {
             auto cnt = 0;
@@ -99,9 +101,9 @@ static void updateCo2History(const int32_t w, const int32_t h, const int32_t x, 
                 cnt++;
             }
         }
+        currentItem++;
         if (xpos < 0)
             break;
-        cnt++;
     }
 
     // grid
@@ -116,6 +118,8 @@ static void updateCo2History(const int32_t w, const int32_t h, const int32_t x, 
     }
 
     co2Graph.pushSprite(x, y);
+
+    log_i("total %lums", millis() - START_MS);
 }
 
 static void updateCo2Value(const int32_t w, const int32_t h, const int32_t x, const int32_t y, size_t newValue)
@@ -156,7 +160,7 @@ static void updateCo2Value(const int32_t w, const int32_t h, const int32_t x, co
 
 static void updateHumidityHistory(const int32_t w, const int32_t h, const int32_t x, const int32_t y)
 {
-    auto startMS = millis();
+    auto const START_MS = millis();
 
     static LGFX_Sprite humidityGraph(&display);
 
@@ -182,10 +186,6 @@ static void updateHumidityHistory(const int32_t w, const int32_t h, const int32_
     const auto LOWEST_LEVEL_H = 15;
     const auto HIGHEST_LEVEL_H = 85;
 
-    const int RED_MAX_Y = mapf(RED_MAX_H, HIGHEST_LEVEL_H, LOWEST_LEVEL_H, 0, h);
-    const int GREEN_MAX_Y = mapf(GREEN_MAX_H, HIGHEST_LEVEL_H, LOWEST_LEVEL_H, 0, h);
-    const int WHITE_MAX_Y = mapf(WHITE_MAX_H, HIGHEST_LEVEL_H, LOWEST_LEVEL_H, 0, h);
-
     // a single bar -1 pixel wide- with the required gradients
     static LGFX_Sprite bar(&humidityGraph);
 
@@ -197,23 +197,27 @@ static void updateHumidityHistory(const int32_t w, const int32_t h, const int32_
             log_e("failed to (re)size sprite");
             return;
         };
+
+        const int RED_MAX_Y = mapf(RED_MAX_H, HIGHEST_LEVEL_H, LOWEST_LEVEL_H, 0, h);
+        const int GREEN_MAX_Y = mapf(GREEN_MAX_H, HIGHEST_LEVEL_H, LOWEST_LEVEL_H, 0, h);
+        const int WHITE_MAX_Y = mapf(WHITE_MAX_H, HIGHEST_LEVEL_H, LOWEST_LEVEL_H, 0, h);
+
+        constexpr const auto WHITE = bar.color565(192, 192, 192);
+        constexpr const auto GREEN = bar.color565(0, 255, 0);
+        constexpr const auto RED = bar.color565(255, 0, 0);
+
+        bar.drawLine(0, 0, 0, RED_MAX_Y, RED);
+        bar.drawGradientLine(0, RED_MAX_Y, 0, GREEN_MAX_Y, RED, GREEN);
+        bar.drawGradientLine(0, GREEN_MAX_Y, 0, WHITE_MAX_Y, GREEN, WHITE);
+        bar.drawLine(0, WHITE_MAX_Y, 0, h, WHITE);
     }
 
-    constexpr const auto WHITE = bar.color565(192, 192, 192);
-    constexpr const auto GREEN = bar.color565(0, 255, 0);
-    constexpr const auto RED = bar.color565(255, 0, 0);
-
-    bar.drawLine(0, 0, 0, RED_MAX_Y, RED);
-    bar.drawGradientLine(0, RED_MAX_Y, 0, GREEN_MAX_Y, RED, GREEN);
-    bar.drawGradientLine(0, GREEN_MAX_Y, 0, WHITE_MAX_Y, GREEN, WHITE);
-    bar.drawLine(0, WHITE_MAX_Y, 0, h, WHITE);
-
     // now we use the bar to copy to the screen as a sprite or as separate pixels
-    auto cnt = 0;
+    auto currentItem = 0;
     for (const auto &item : history)
     {
         const int BAR_HEIGHT = mapf(item.humidity, LOWEST_LEVEL_H, HIGHEST_LEVEL_H, 0, h);
-        const auto xpos = humidityGraph.width() - cnt * (BAR_WIDTH + GAP_WIDTH);
+        const auto xpos = humidityGraph.width() - currentItem * (BAR_WIDTH + GAP_WIDTH);
         if (BAR_HEIGHT >= h)
         {
             auto cnt = 0;
@@ -229,9 +233,9 @@ static void updateHumidityHistory(const int32_t w, const int32_t h, const int32_
                 cnt++;
             }
         }
+        currentItem++;
         if (xpos < 0)
             break;
-        cnt++;
     }
 
     // grid
@@ -244,7 +248,10 @@ static void updateHumidityHistory(const int32_t w, const int32_t h, const int32_
         humidityGraph.writeFastHLine(0, ypos, humidityGraph.width(), humidityGraph.color565(0, 0, 64));
         humidityGraph.drawNumber(hgrid, humidityGraph.width() >> 1, ypos, &DejaVu12);
     }
+
     humidityGraph.pushSprite(x, y);
+
+    log_i("total %lums", millis() - START_MS);
 }
 
 static void updateHumidityValue(const int32_t w, const int32_t h, const int32_t x, const int32_t y, size_t newValue)
@@ -319,6 +326,11 @@ static void updateTempHistory(const int32_t w, const int32_t h, const int32_t x,
     // a single bar -1 pixel wide- with the required gradients
     static LGFX_Sprite bar(&tempGraph);
 
+    constexpr const auto BLUE = bar.color565(95, 198, 224);
+    constexpr const auto GREEN = bar.color565(0, 255, 0);
+    constexpr const auto YELLOW = bar.color565(255, 255, 0);
+    constexpr const auto RED = bar.color565(255, 0, 0);
+
     if (bar.height() != h)
     {
         bar.setColorDepth(lgfx::rgb565_2Byte);
@@ -327,25 +339,20 @@ static void updateTempHistory(const int32_t w, const int32_t h, const int32_t x,
             log_e("failed to (re)size sprite");
             return;
         };
+
+        bar.drawLine(0, 0, 0, RED_MAX_Y, RED);
+        bar.drawGradientLine(0, RED_MAX_Y, 0, YELLOW_MAX_Y, RED, YELLOW);
+        bar.drawGradientLine(0, YELLOW_MAX_Y, 0, GREEN_MAX_Y, YELLOW, GREEN);
+        bar.drawGradientLine(0, GREEN_MAX_Y, 0, BLUE_MAX_Y, GREEN, BLUE);
+        bar.drawLine(0, BLUE_MAX_Y, 0, h, BLUE);
     }
 
-    constexpr const auto BLUE = bar.color565(95, 198, 224);
-    constexpr const auto GREEN = bar.color565(0, 255, 0);
-    constexpr const auto YELLOW = bar.color565(255, 255, 0);
-    constexpr const auto RED = bar.color565(255, 0, 0);
-
-    bar.drawLine(0, 0, 0, RED_MAX_Y, RED);
-    bar.drawGradientLine(0, RED_MAX_Y, 0, YELLOW_MAX_Y, RED, YELLOW);
-    bar.drawGradientLine(0, YELLOW_MAX_Y, 0, GREEN_MAX_Y, YELLOW, GREEN);
-    bar.drawGradientLine(0, GREEN_MAX_Y, 0, BLUE_MAX_Y, GREEN, BLUE);
-    bar.drawLine(0, BLUE_MAX_Y, 0, h, BLUE);
-
     // now we use the bar to copy to the screen as a sprite or as separate pixels
-    auto cnt = 0;
+    auto currentItem = 0;
     for (const auto &item : history)
     {
         const int BAR_HEIGHT = mapf(item.temp, LOWEST_LEVEL_T, HIGHEST_LEVEL_T, 0, h);
-        const auto xpos = tempGraph.width() - cnt * (BAR_WIDTH + GAP_WIDTH);
+        const auto xpos = tempGraph.width() - currentItem * (BAR_WIDTH + GAP_WIDTH);
         if (BAR_HEIGHT >= h)
         {
             auto cnt = 0;
@@ -361,9 +368,9 @@ static void updateTempHistory(const int32_t w, const int32_t h, const int32_t x,
                 cnt++;
             }
         }
+        currentItem++;
         if (xpos < 0)
             break;
-        cnt++;
     }
 
     // grid
