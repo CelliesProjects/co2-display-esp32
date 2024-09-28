@@ -119,7 +119,7 @@ static void updateCo2History(const int32_t w, const int32_t h, const int32_t x, 
 
     co2Graph.pushSprite(x, y);
 
-    log_i("total %lums", millis() - START_MS);
+    log_v("total %lums", millis() - START_MS);
 }
 
 static void updateCo2Value(const int32_t w, const int32_t h, const int32_t x, const int32_t y, size_t newValue)
@@ -128,7 +128,6 @@ static void updateCo2Value(const int32_t w, const int32_t h, const int32_t x, co
 
     if (co2Value.height() != h || co2Value.width() != w)
     {
-        log_i("(re)allocating a sprite");
         co2Value.setColorDepth(lgfx::palette_2bit);
         co2Value.setPsram(true);
         if (!co2Value.createSprite(w, h))
@@ -251,7 +250,7 @@ static void updateHumidityHistory(const int32_t w, const int32_t h, const int32_
 
     humidityGraph.pushSprite(x, y);
 
-    log_i("total %lums", millis() - START_MS);
+    log_v("total %lums", millis() - START_MS);
 }
 
 static void updateHumidityValue(const int32_t w, const int32_t h, const int32_t x, const int32_t y, size_t newValue)
@@ -387,7 +386,7 @@ static void updateTempHistory(const int32_t w, const int32_t h, const int32_t x,
     tempGraph.pushSprite(x, y);
 
     log_v("push time %lums", millis() - pushTimeMS);
-    log_v("total: %i T values in %lums", cnt, millis() - startMS);
+    log_v("total %lums", millis() - startMS);
 }
 
 static void updateTempValue(const int32_t w, const int32_t h, const int32_t x, const int32_t y, float newValue)
@@ -434,77 +433,7 @@ void displayTask(void *parameter)
     display.setBrightness(130);
     display.setTextWrap(false, false);
     display.setTextScroll(false);
-    /*
-        // setup the graph sprites
-        tempGraph.setColorDepth(lgfx::rgb565_2Byte);
-        tempGraph.setPsram(true);
-        if (!tempGraph.createSprite(GRAPH_WIDTH, GRAPH_HEIGHT))
-        {
-            Serial.println("could not create sprite. halting");
-            while (1)
-                delay(10);
-        }
-        tempGraph.setTextSize(1);
-        tempGraph.setTextWrap(false, false);
 
-        humidityGraph.setColorDepth(lgfx::rgb565_2Byte);
-        humidityGraph.setPsram(true);
-        if (!humidityGraph.createSprite(GRAPH_WIDTH, GRAPH_HEIGHT))
-        {
-            Serial.println("could not create sprite. halting");
-            while (1)
-                delay(10);
-        }
-        humidityGraph.setTextSize(1);
-        humidityGraph.setTextWrap(false, false);
-
-        co2Graph.setColorDepth(lgfx::rgb565_2Byte);
-        co2Graph.setPsram(true);
-        if (!co2Graph.createSprite(GRAPH_WIDTH, GRAPH_HEIGHT))
-        {
-            Serial.println("could not create sprite. halting");
-            while (1)
-                delay(10);
-        }
-        co2Graph.setTextSize(1);
-        co2Graph.setTextWrap(false, false);
-
-        // value sprites
-        co2Value.setColorDepth(lgfx::palette_2bit);
-        co2Value.setPsram(false);
-        if (!co2Value.createSprite(GRAPH_WIDTH, GRAPH_HEIGHT))
-        {
-            log_i("could not create sprite. halting");
-            while (1)
-                delay(10);
-        }
-        co2Value.setPaletteColor(1, 0, 0, 255);
-        co2Value.setPaletteColor(2, 31, 255, 31);
-        co2Value.setPaletteColor(3, 180, 180, 180);
-
-
-        humidityValue.setColorDepth(lgfx::palette_2bit);
-        if (!humidityValue.createSprite(GRAPH_WIDTH, GRAPH_HEIGHT))
-        {
-            Serial.println("could not create sprite. halting");
-            while (1)
-                delay(10);
-        }
-        humidityValue.setPaletteColor(1, 0, 0, 255);
-        humidityValue.setPaletteColor(2, 31, 255, 31);
-        humidityValue.setPaletteColor(3, 180, 180, 180);
-
-        tempValue.setColorDepth(lgfx::palette_2bit);
-        if (!tempValue.createSprite(GRAPH_WIDTH, GRAPH_HEIGHT))
-        {
-            Serial.println("could not create sprite. halting");
-            while (1)
-                delay(10);
-        }
-        tempValue.setPaletteColor(1, 0, 0, 255);
-        tempValue.setPaletteColor(2, 31, 255, 31);
-        tempValue.setPaletteColor(3, 180, 180, 180);
-    */
     while (1)
     {
         static struct displayMessage msg;
@@ -560,12 +489,13 @@ void displayTask(void *parameter)
             default:
                 log_w("unhandled tft msg type");
             }
+            delay(5);
         }
-
-        int32_t x, y;
-        if (display.getTouch(&x, &y))
-            display.fillRect(x - 2, y - 2, 5, 5, TFT_BLUE);
-
+        /*
+                int32_t x, y;
+                if (display.getTouch(&x, &y))
+                    display.fillRect(x - 2, y - 2, 5, 5, TFT_BLUE);
+        */
         struct tm timeinfo = {0};
         static struct tm prevTime = {0};
         if (getLocalTime(&timeinfo, 0) && prevTime.tm_sec != timeinfo.tm_sec)

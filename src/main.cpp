@@ -12,7 +12,7 @@
 
 #define HISTORY_MAX_ITEMS 180
 
-#define DISPLAY_QUEUE_MAX_ITEMS 1
+#define DISPLAY_QUEUE_MAX_ITEMS 5
 
 #include "secrets.h" /* untracked file containing wifi credentials */
 #include "storageStruct.hpp"
@@ -280,4 +280,5 @@ void loop()
         lastWebsocketEventMS = millis();
     }
     webSocket.loop();
+    yield();
 }
