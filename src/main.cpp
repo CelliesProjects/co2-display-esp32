@@ -22,6 +22,10 @@ extern void displayTask(void *parameter);
 extern QueueHandle_t displayQueue;
 static TaskHandle_t displayTaskHandle = nullptr;
 
+// https://docs.espressif.com/projects/esp-idf/en/v4.2/esp32/api-reference/protocols/esp_websocket_client.html
+
+// https://github.com/espressif/esp-idf/blob/v4.2/examples/protocols/websocket/main/websocket_example.c
+
 static WebSocketsClient webSocket;
 std::list<struct storageStruct> history;
 
