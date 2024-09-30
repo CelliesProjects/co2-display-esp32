@@ -1,6 +1,6 @@
 #include "displayTask.hpp"
 
-const float mapf(const float x, const float in_min, const float in_max, const float out_min, const float out_max)
+static const float mapf(const float x, const float in_min, const float in_max, const float out_min, const float out_max)
 {
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
@@ -148,11 +148,8 @@ static void updateCo2Value(const int32_t w, const int32_t h, const int32_t x, co
     co2Value.drawNumber(newValue, co2Value.width() >> 1, (co2Value.height() >> 1) + 4, &DejaVu40);
 
     const auto xMiddle = co2Value.width() >> 1;
-    const auto superScriptOffset = 17;
-
-    co2Value.drawString("CO²", xMiddle, co2Value.height() >> 2, &DejaVu24Modded);
-    //co2Value.drawString("2", xMiddle + superScriptOffset, (co2Value.height() >> 2) - 10, &DejaVu12);
-    co2Value.drawString("ppm", xMiddle, co2Value.height() - (co2Value.height() >> 2), &DejaVu18);
+    co2Value.drawString("CO²", xMiddle, 24, &DejaVu24Modded);
+    co2Value.drawString("ppm", xMiddle, co2Value.height() - 24, &DejaVu24Modded);
 
     co2Value.pushSprite(x, y);
 }
@@ -281,8 +278,8 @@ static void updateHumidityValue(const int32_t w, const int32_t h, const int32_t 
     humidityValue.drawNumber(newValue, humidityValue.width() >> 1, (humidityValue.height() >> 1) + 4, &DejaVu40);
 
     const auto xMiddle = humidityValue.width() >> 1;
-    humidityValue.drawString("RH", xMiddle, humidityValue.height() >> 2, &DejaVu24);
-    humidityValue.drawString("%", xMiddle, humidityValue.height() - (humidityValue.height() >> 2), &DejaVu18);
+    humidityValue.drawString("RH", xMiddle, 24, &DejaVu24Modded);
+    humidityValue.drawString("%", xMiddle, humidityValue.height() - 24, &DejaVu24Modded);
 
     humidityValue.pushSprite(x, y);
 }
@@ -414,12 +411,39 @@ static void updateTempValue(const int32_t w, const int32_t h, const int32_t x, c
 
     tempValue.setTextDatum(CC_DATUM);
     tempValue.setTextColor(2);
-    tempValue.drawFloat(newValue, 1, tempValue.width() >> 1, (tempValue.height() >> 1) + 4, &DejaVu40);
 
-    const auto xMiddle = tempValue.width() >> 1;
-    tempValue.drawString("T", xMiddle, tempValue.height() >> 2, &DejaVu24);
+    char buffer[20];
+    snprintf(buffer, sizeof(buffer), "%.1f", newValue);
 
-    tempValue.drawString("°C", xMiddle, tempValue.height() - (tempValue.height() >> 2), &DejaVu24Modded);
+    char *integerStr;
+    integerStr = strtok(buffer, ".");
+    if (!integerStr)
+        return;
+
+    char *fractionStr;
+    fractionStr = strtok(NULL, "\n");
+    if (!fractionStr)
+        return;
+
+    // set the 40pt font
+    tempValue.setFont(&DejaVu40);
+    auto iWidth = tempValue.textWidth(integerStr);
+
+    // set the 24pt font
+    tempValue.setFont(&DejaVu24Modded);
+    auto fWidth = tempValue.textWidth(fractionStr);
+
+    auto xMiddle = tempValue.width() >> 1;
+    auto yMiddle = tempValue.height() >> 1;
+
+    auto bigNumberOffset = fWidth / 2;
+    auto smallNumberOffset = bigNumberOffset - (iWidth + fWidth) / 2;
+
+    tempValue.drawString(integerStr, xMiddle - bigNumberOffset, yMiddle, &DejaVu40);
+    tempValue.drawString(fractionStr, xMiddle - smallNumberOffset, yMiddle - 6, &DejaVu24Modded);
+
+    tempValue.drawString("T", xMiddle, 24, &DejaVu24Modded);
+    tempValue.drawString("°C", xMiddle, tempValue.height() - 24, &DejaVu24Modded);
 
     tempValue.pushSprite(x, y);
 }
@@ -435,6 +459,7 @@ void displayTask(void *parameter)
 
     while (1)
     {
+        const auto DEFAULT_DELAY_MS = 5;
         static struct displayMessage msg;
         if (xQueueReceive(displayQueue, &msg, pdTICKS_TO_MS(5)) == pdTRUE)
         {
@@ -488,7 +513,8 @@ void displayTask(void *parameter)
             default:
                 log_w("unhandled tft msg type");
             }
-            delay(5);
+            if (msg.type != displayMessage::SYSTEM_MESSAGE)
+                delay(DEFAULT_DELAY_MS);
         }
         /*
                 int32_t x, y;

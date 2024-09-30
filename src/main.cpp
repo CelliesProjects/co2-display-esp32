@@ -12,7 +12,7 @@
 
 #define HISTORY_MAX_ITEMS 180
 
-#define DISPLAY_QUEUE_MAX_ITEMS 5
+#define DISPLAY_QUEUE_MAX_ITEMS 8
 
 #include "secrets.h" /* untracked file containing wifi credentials */
 #include "storageStruct.hpp"
