@@ -440,7 +440,7 @@ static void updateTempValue(const int32_t w, const int32_t h, const int32_t x, c
     auto smallNumberOffset = bigNumberOffset - (iWidth + fWidth) / 2;
 
     tempValue.drawString(integerStr, xMiddle - bigNumberOffset, yMiddle, &DejaVu40);
-    tempValue.drawString(fractionStr, xMiddle - smallNumberOffset, yMiddle - 6, &DejaVu24Modded);
+    tempValue.drawString(fractionStr, xMiddle - smallNumberOffset, yMiddle - 4, &DejaVu24Modded);
 
     tempValue.drawString("T", xMiddle, 24, &DejaVu24Modded);
     tempValue.drawString("°C", xMiddle, tempValue.height() - 24, &DejaVu24Modded);
@@ -448,93 +448,99 @@ static void updateTempValue(const int32_t w, const int32_t h, const int32_t x, c
     tempValue.pushSprite(x, y);
 }
 
+static void handleWebsocketMessage(const displayMessage &msg)
+{
+    switch (msg.type)
+    {
+    case displayMessage::SYSTEM_MESSAGE:
+    {
+        display.setCursor(0, 0);
+        display.setTextColor(TFT_BLACK, TFT_WHITE);
+        display.setTextSize(2 /* x scale */, 5 /* y scale */);
+        display.println(msg.str);
+        break;
+    }
+
+    case displayMessage::CO2_LEVEL:
+    {
+        updateCo2Value(110, 110, 360, 10, msg.sizeVal);
+        break;
+    }
+
+    case displayMessage::CO2_HISTORY:
+    {
+        updateCo2History(350, 110, 10, 10);
+        break;
+    }
+
+    case displayMessage::TEMPERATURE:
+    {
+        updateTempValue(110, 110, 360, 250, msg.floatVal);
+        break;
+    }
+
+    case displayMessage::TEMPERATURE_HISTORY:
+    {
+        updateTempHistory(350, 110, 10, 250);
+        break;
+    }
+
+    case displayMessage::HUMIDITY:
+    {
+        updateHumidityValue(110, 110, 360, 130, msg.sizeVal);
+        break;
+    }
+
+    case displayMessage::HUMIDITY_HISTORY:
+    {
+        updateHumidityHistory(350, 110, 10, 130);
+        break;
+    }
+
+    default:
+        log_w("unhandled tft msg type");
+    }
+}
+
+static void updateClock()
+{
+    struct tm timeinfo = {0};
+    static struct tm prevTime = {0};
+    if (getLocalTime(&timeinfo, 0) && prevTime.tm_sec != timeinfo.tm_sec)
+    {
+        // TODO: first draw the time 88:88:88 in a very lightcolored font with the background overwrite
+        // then draw the current time over that - requires a sprite
+        char timestr[16];
+        strftime(timestr, sizeof(timestr), "%X", &timeinfo); // https://cplusplus.com/reference/ctime/strftime/
+        display.setTextColor(display.color565(20, 12, 6), BACKGROUND_COLOR);
+        display.setTextDatum(CC_DATUM);
+        display.setTextSize(2);
+        display.drawString(timestr, display.width() >> 1, 420, &Font7);
+        prevTime = timeinfo;
+    }
+}
+
 void displayTask(void *parameter)
 {
     display.setColorDepth(lgfx::rgb565_2Byte);
     display.init();
-    display.clear(display.color565(0, 0, 255));
+    display.clear(BACKGROUND_COLOR);
     display.setBrightness(130);
     display.setTextWrap(false, false);
     display.setTextScroll(false);
+
+    // display.drawBmp((uint8_t *)background_bmp, 0,0, 480,480);
+
+    // display.drawBmpFile("background.bmp", 0, 0, 480, 480, 0, 0);
 
     while (1)
     {
         const auto DEFAULT_DELAY_MS = 5;
         static struct displayMessage msg;
         if (xQueueReceive(displayQueue, &msg, pdTICKS_TO_MS(5)) == pdTRUE)
-        {
-            switch (msg.type)
-            {
-            case displayMessage::SYSTEM_MESSAGE:
-            {
-                display.setCursor(0, 0);
-                display.setTextColor(TFT_BLACK, TFT_WHITE);
-                display.setTextSize(2 /* x scale */, 5 /* y scale */);
-                display.println(msg.str);
-                break;
-            }
-
-            case displayMessage::CO2_LEVEL:
-            {
-                updateCo2Value(110, 110, 370, 0, msg.sizeVal);
-                break;
-            }
-
-            case displayMessage::CO2_HISTORY:
-            {
-                updateCo2History(370, 110, 0, 0);
-                break;
-            }
-
-            case displayMessage::TEMPERATURE:
-            {
-                updateTempValue(110, 110, 370, 240, msg.floatVal);
-                break;
-            }
-
-            case displayMessage::TEMPERATURE_HISTORY:
-            {
-                updateTempHistory(370, 110, 0, 240);
-                break;
-            }
-
-            case displayMessage::HUMIDITY:
-            {
-                updateHumidityValue(110, 110, 370, 120, msg.sizeVal);
-                break;
-            }
-
-            case displayMessage::HUMIDITY_HISTORY:
-            {
-                updateHumidityHistory(370, 110, 0, 120);
-                break;
-            }
-
-            default:
-                log_w("unhandled tft msg type");
-            }
-            if (msg.type != displayMessage::SYSTEM_MESSAGE)
-                delay(DEFAULT_DELAY_MS);
-        }
-        /*
-                int32_t x, y;
-                if (display.getTouch(&x, &y))
-                    display.fillRect(x - 2, y - 2, 5, 5, TFT_BLUE);
-        */
-        struct tm timeinfo = {0};
-        static struct tm prevTime = {0};
-        if (getLocalTime(&timeinfo, 0) && prevTime.tm_sec != timeinfo.tm_sec)
-        {
-            // TODO: first draw the time 88:88:88 in a very lightcolored font with the background overwrite
-            // then draw the current time over that - requires a sprite
-            char timestr[16];
-            strftime(timestr, sizeof(timestr), "%X", &timeinfo); // https://cplusplus.com/reference/ctime/strftime/
-            display.setTextColor(display.color565(253, 32, 32), TFT_BLUE);
-            display.setTextDatum(CC_DATUM);
-            display.setTextSize(1.6);
-            display.drawString(timestr, display.width() >> 1, 400, &Font7);
-            prevTime = timeinfo;
-        }
-        yield();
+            handleWebsocketMessage(msg);
+        else
+            updateClock();
+        delay(DEFAULT_DELAY_MS);
     }
 }

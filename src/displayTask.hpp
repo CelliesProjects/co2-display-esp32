@@ -2,6 +2,7 @@
 #define DISPLAY_TASK
 
 #include <Arduino.h>
+// #include <HTTPClient.h>
 #include <list>
 
 #include "storageStruct.hpp"
@@ -21,6 +22,8 @@ static const auto GRAPH_HEIGHT = 110;
 extern std::list<struct storageStruct> history;
 
 static LGFX display;
+
+static const auto BACKGROUND_COLOR = display.color565(245, 102, 10);
 
 QueueHandle_t displayQueue = nullptr;
 

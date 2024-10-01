@@ -252,7 +252,7 @@ void setup()
                                   NULL,
                                   4096,
                                   NULL,
-                                  tskIDLE_PRIORITY + 1,
+                                  tskIDLE_PRIORITY + 10,
                                   &displayTaskHandle);
 
     if (taskResult != pdPASS)
@@ -273,6 +273,7 @@ void setup()
     webSocket.begin(WEBSOCKET_SERVER, WEBSOCKET_PORT, WEBSOCKET_URL);
     webSocket.onEvent(webSocketEvent);
     webSocket.setReconnectInterval(600);
+    //vTaskPrioritySet(NULL, 10);
 }
 
 void loop()
