@@ -35,6 +35,7 @@ public:
             cfg.pin_cs = 39;
             cfg.pin_sclk = 48;
             cfg.pin_mosi = 47;
+            cfg.use_psram = 1;
 
             _panel_instance.config_detail(cfg);
         }
@@ -63,7 +64,7 @@ public:
             cfg.pin_vsync = GPIO_NUM_17;
             cfg.pin_hsync = GPIO_NUM_16;
             cfg.pin_pclk = GPIO_NUM_21;
-            cfg.freq_write = 14000000;
+            cfg.freq_write = 10000000;
 
             cfg.hsync_polarity = 0;
             cfg.hsync_front_porch = 10;
