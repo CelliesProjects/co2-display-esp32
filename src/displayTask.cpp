@@ -1,6 +1,6 @@
 #include "displayTask.hpp"
 
-static const float mapf(const float x, const float in_min, const float in_max, const float out_min, const float out_max)
+static float mapf(const float x, const float in_min, const float in_max, const float out_min, const float out_max)
 {
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
@@ -27,7 +27,7 @@ static const float mapf(const float x, const float in_min, const float in_max, c
 
 static void updateCo2History(const int32_t w, const int32_t h, const int32_t x, const int32_t y)
 {
-    auto const START_MS = millis();
+    [[maybe_unused]] auto const START_MS = millis();
 
     static LGFX_Sprite co2Graph(&display);
 
@@ -156,7 +156,7 @@ static void updateCo2Value(const int32_t w, const int32_t h, const int32_t x, co
 
 static void updateHumidityHistory(const int32_t w, const int32_t h, const int32_t x, const int32_t y)
 {
-    auto const START_MS = millis();
+    [[maybe_unused]] auto const START_MS = millis();
 
     static LGFX_Sprite humidityGraph(&display);
 
@@ -286,7 +286,7 @@ static void updateHumidityValue(const int32_t w, const int32_t h, const int32_t 
 
 static void updateTempHistory(const int32_t w, const int32_t h, const int32_t x, const int32_t y)
 {
-    auto startMS = millis();
+    [[maybe_unused]] auto const START_MS = millis();
 
     static LGFX_Sprite tempGraph(&display);
 
@@ -379,11 +379,11 @@ static void updateTempHistory(const int32_t w, const int32_t h, const int32_t x,
         tempGraph.writeFastHLine(0, ypos, tempGraph.width(), tempGraph.color565(0, 0, 64));
         tempGraph.drawNumber(hgrid, tempGraph.width() >> 1, ypos, &DejaVu12);
     }
-    const auto pushTimeMS = millis();
+    [[maybe_unused]]const auto pushTimeMS = millis();
     tempGraph.pushSprite(x, y);
 
     log_v("push time %lums", millis() - pushTimeMS);
-    log_v("total %lums", millis() - startMS);
+    log_v("total %lums", millis() - START_MS);
 }
 
 static void updateTempValue(const int32_t w, const int32_t h, const int32_t x, const int32_t y, float newValue)
@@ -448,7 +448,7 @@ static void updateTempValue(const int32_t w, const int32_t h, const int32_t x, c
     tempValue.pushSprite(x, y);
 }
 
-static void handleWebsocketMessage(const displayMessage &msg)
+static void handleMessage(const displayMessage &msg)
 {
     switch (msg.type)
     {
@@ -504,8 +504,8 @@ static void handleWebsocketMessage(const displayMessage &msg)
 
 static void updateClock()
 {
-    struct tm timeinfo = {0};
-    static struct tm prevTime = {0};
+    struct tm timeinfo = {};
+    static struct tm prevTime = {};
     if (getLocalTime(&timeinfo, 0) && prevTime.tm_sec != timeinfo.tm_sec)
     {
         // TODO: first draw the time 88:88:88 in a very lightcolored font with the background overwrite
@@ -533,14 +533,18 @@ void displayTask(void *parameter)
 
     // display.drawBmpFile("background.bmp", 0, 0, 480, 480, 0, 0);
 
+    constexpr const auto TICK_RATE_HZ = 50;
+
+    constexpr const TickType_t ticksToWait = pdTICKS_TO_MS(1000 / TICK_RATE_HZ);
+    static TickType_t xLastWakeTime = xTaskGetTickCount();
     while (1)
     {
-        const auto DEFAULT_DELAY_MS = 5;
+        vTaskDelayUntil(&xLastWakeTime, ticksToWait);
+
         static struct displayMessage msg;
-        if (xQueueReceive(displayQueue, &msg, pdTICKS_TO_MS(5)) == pdTRUE)
-            handleWebsocketMessage(msg);
+        if (xQueueReceive(displayQueue, &msg, 0) == pdTRUE)
+            handleMessage(msg);
         else
             updateClock();
-        delay(DEFAULT_DELAY_MS);
     }
 }

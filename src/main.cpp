@@ -221,6 +221,8 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
     case WStype_FRAGMENT_BIN_START:
     case WStype_FRAGMENT:
     case WStype_FRAGMENT_FIN:
+    case WStype_PING:
+    case WStype_PONG:
         break;
     }
 }
@@ -264,7 +266,7 @@ void setup()
     Serial.printf("waiting for WiFi network %s to connect\n", WIFI_SSID);
 
     while (!WiFi.isConnected())
-        delay(10);
+        vTaskDelay(pdMS_TO_TICKS(10));
 
     Serial.printf("connected to %s\n", WIFI_SSID);
 
@@ -273,11 +275,17 @@ void setup()
     webSocket.begin(WEBSOCKET_SERVER, WEBSOCKET_PORT, WEBSOCKET_URL);
     webSocket.onEvent(webSocketEvent);
     webSocket.setReconnectInterval(600);
-    //vTaskPrioritySet(NULL, 10);
 }
+
+constexpr const auto TICK_RATE_HZ = 50;
+
+constexpr const TickType_t ticksToWait = pdTICKS_TO_MS(1000 / TICK_RATE_HZ);
+static TickType_t xLastWakeTime = xTaskGetTickCount();
 
 void loop()
 {
+    vTaskDelayUntil(&xLastWakeTime, ticksToWait);
+
     if (webSocket.isConnected() && millis() - lastWebsocketEventMS > WEBSOCKET_TIMEOUT)
     {
         Serial.println("ws timeout");
@@ -285,5 +293,4 @@ void loop()
         lastWebsocketEventMS = millis();
     }
     webSocket.loop();
-    yield();
 }
