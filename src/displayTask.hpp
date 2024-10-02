@@ -21,6 +21,9 @@ static const auto GRAPH_HEIGHT = 110;
 
 extern std::list<struct storageStruct> history;
 
+extern const char *VISUAL_CROSSING_API_KEY;
+extern const char *VISUAL_CROSSING_LOCATON;
+
 static LGFX display;
 
 static const auto BACKGROUND_COLOR = display.color565(245, 102, 10);

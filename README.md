@@ -92,6 +92,10 @@ I dont know if there is a way to share the GPIOs between the tft and dac
 
 More info:
 
+https://www.visualcrossing.com/weather/weather-data-services/
+
+https://github.com/visualcrossing/WeatherApi/blob/master/Arduino_samples_esp32/src/sketch.ino
+
 https://github.com/esp-arduino-libs/ESP32_Display_Panel/blob/master/docs/Board_Instructions.md#shenzhen-jingcai-intelligent
 
 https://homeding.github.io/boards/esp32s3/panel-4848S040.htm
