@@ -379,7 +379,7 @@ static void updateTempHistory(const int32_t w, const int32_t h, const int32_t x,
         tempGraph.writeFastHLine(0, ypos, tempGraph.width(), tempGraph.color565(0, 0, 64));
         tempGraph.drawNumber(hgrid, tempGraph.width() >> 1, ypos, &DejaVu12);
     }
-    [[maybe_unused]]const auto pushTimeMS = millis();
+    [[maybe_unused]] const auto pushTimeMS = millis();
     tempGraph.pushSprite(x, y);
 
     log_v("push time %lums", millis() - pushTimeMS);
@@ -508,14 +508,35 @@ static void updateClock()
     static struct tm prevTime = {};
     if (getLocalTime(&timeinfo, 0) && prevTime.tm_sec != timeinfo.tm_sec)
     {
-        // TODO: first draw the time 88:88:88 in a very lightcolored font with the background overwrite
-        // then draw the current time over that - requires a sprite
-        char timestr[16];
-        strftime(timestr, sizeof(timestr), "%X", &timeinfo); // https://cplusplus.com/reference/ctime/strftime/
-        display.setTextColor(display.color565(20, 12, 6), BACKGROUND_COLOR);
-        display.setTextDatum(CC_DATUM);
-        display.setTextSize(2);
-        display.drawString(timestr, display.width() >> 1, 420, &Font7);
+        static LGFX_Sprite clock(&display);
+        clock.setTextDatum(CC_DATUM);
+        clock.setTextSize(2);
+        char timestr[16] = "88:88";
+        auto width = clock.textWidth(timestr, &Font7);
+        auto height = clock.fontHeight(&Font7);
+
+        if (clock.width() != width || clock.height() != height)
+        {
+            const auto result = clock.createSprite(width, height);
+            if (!result)
+            {
+                log_e("clould not create sprite");
+                return;
+            }
+            log_i("created sprite");
+            clock.clear(BACKGROUND_COLOR);
+        }
+
+        clock.setTextColor(clock.color565(204, 122, 0));
+        clock.drawString(timestr, clock.width() >> 1, clock.height() >> 1, &Font7);
+
+        strftime(timestr, sizeof(timestr), "%R", &timeinfo); // https://cplusplus.com/reference/ctime/strftime/
+
+        clock.setTextColor(display.color565(20, 12, 6));
+        clock.drawString(timestr, clock.width() >> 1, clock.height() >> 1, &Font7);
+
+        clock.pushSprite(10, 370);
+
         prevTime = timeinfo;
     }
 }

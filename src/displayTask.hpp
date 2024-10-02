@@ -13,8 +13,8 @@
 
 #include "fonts/DejaVu24-modded.h" /* contains percent sign ans superscript 2*/
 
-static const auto BAR_WIDTH = 2;
-static const auto GAP_WIDTH = 2;
+static const auto BAR_WIDTH = 2; /* the bars inside a graph */
+static const auto GAP_WIDTH = 2; /* the gap between the bars */
 
 static const auto GRAPH_WIDTH = 370;
 static const auto GRAPH_HEIGHT = 110;
