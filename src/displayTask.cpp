@@ -503,14 +503,14 @@ static void handleMessage(const displayMessage &msg)
 }
 
 static void updateClock()
-{    
+{
     struct tm timeinfo = {};
     static struct tm prevTime = {};
     if (getLocalTime(&timeinfo, 0) && prevTime.tm_sec != timeinfo.tm_sec)
     {
-        const auto font = &Font7;
+        constexpr const auto font = &Font7;
         static LGFX_Sprite clock(&display);
-        
+
         clock.setTextDatum(CC_DATUM);
         clock.setTextSize(2);
         char timestr[16] = "88:88";
@@ -529,8 +529,8 @@ static void updateClock()
         }
 
         clock.setTextColor(clock.color565(204, 122, 0));
-        const auto xMiddle = clock.width() >> 1;
-        const auto yMiddle = clock.height() >> 1;
+        const auto xMiddle = width >> 1;
+        const auto yMiddle = height >> 1;
         clock.drawString(timestr, xMiddle, yMiddle, font);
         strftime(timestr, sizeof(timestr), "%R", &timeinfo); // https://cplusplus.com/reference/ctime/strftime/
         clock.setTextColor(display.color565(20, 12, 6));
