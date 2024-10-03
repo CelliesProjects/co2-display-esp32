@@ -502,26 +502,9 @@ static void handleMessage(const displayMessage &msg)
     }
 }
 
-
 // https://github.com/visualcrossing/WeatherApi/blob/master/Arduino_samples_esp32/src/sketch.ino
 
 // https://www.visualcrossing.com/weather/weather-data-services/Wageningen,%20Holland?v=api#
-
-static void getWeatherData()
-{
-    String url;
-    url.reserve(256);
-    url.concat("https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/");
-    url.concat(VISUAL_CROSSING_LOCATON);
-    url.concat("/today");
-
-    
-    url.concat("?unitGroup=metric&elements=datetime,description,conditions,icon&include=days%2Cobs&key=");
-    url.concat(VISUAL_CROSSING_API_KEY);
-    url.concat("&contentType=json");
-
-    log_i("%s", url.c_str());
-}
 
 static void updateClock()
 {
@@ -529,7 +512,7 @@ static void updateClock()
     static struct tm prevTime = {};
     if (getLocalTime(&timeinfo, 0) && prevTime.tm_sec != timeinfo.tm_sec)
     {
-        getWeatherData();
+        //getWeatherData();
         constexpr const auto font = &Font7;
         static LGFX_Sprite clock(&display);
 

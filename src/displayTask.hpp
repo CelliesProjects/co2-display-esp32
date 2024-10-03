@@ -2,7 +2,6 @@
 #define DISPLAY_TASK
 
 #include <Arduino.h>
-// #include <HTTPClient.h>
 #include <list>
 
 #include "storageStruct.hpp"
@@ -20,9 +19,6 @@ static const auto GRAPH_WIDTH = 370;
 static const auto GRAPH_HEIGHT = 110;
 
 extern std::list<struct storageStruct> history;
-
-extern const char *VISUAL_CROSSING_API_KEY;
-extern const char *VISUAL_CROSSING_LOCATON;
 
 static LGFX display;
 
