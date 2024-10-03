@@ -1,5 +1,10 @@
 #include "weatherDataTask.h"
 
+// // https://github.com/visualcrossing/WeatherApi/blob/master/Arduino_samples_esp32/src/sketch.ino
+
+//
+// https://www.visualcrossing.com/weather/weather-data-services/Wageningen,%20Holland?v=api#
+
 void getWeatherDataTask(void *parameter)
 {
     if (!WiFi.isConnected() || !VISUAL_CROSSING_CITY || !VISUAL_CROSSING_COUNTRY)
@@ -33,26 +38,34 @@ void getWeatherDataTask(void *parameter)
     const auto httpResponseCode = http.GET();
     if (httpResponseCode != HTTP_CODE_OK)
     {
-        log_e("could not get weather forecast error %i\n%s", httpResponseCode, http.errorToString(httpResponseCode).c_str());
+        log_e("could not get weather forecast, error %i\n%s", httpResponseCode, http.errorToString(httpResponseCode).c_str());
         http.end();
         vTaskDelete(NULL);
     }
 
     JsonDocument doc;
-    const DeserializationError error = deserializeJson(doc, http.getStream());
+    const auto error = deserializeJson(doc, http.getStream());
     if (error)
     {
         log_e("could not parse JSON because %s", error.f_str());
         http.end();
         vTaskDelete(NULL);
     }
-
-    const char *condition = doc["days"][0]["conditions"];
-    float temperature = doc["days"][0]["temp"];
-
-    log_i("condition: %s", condition);
-    log_i("temp: %f", temperature);
-
+    
     http.end();
+
+    if (doc["days"][0]["icon"].isNull() || doc["days"][0]["temp"].isNull())
+    {
+        log_w("no values in weather forecast!");
+        vTaskDelete(NULL);
+    }
+
+    displayMessage msg;
+    //const char *condition = doc["days"][0]["conditions"];
+    snprintf(msg.str, sizeof(msg.str), "%s", (const char *)doc["days"][0]["icon"]);
+    msg.floatVal = doc["days"][0]["temp"];
+    msg.type = displayMessage::WEATHER_UPDATE;
+    xQueueSend(displayQueue, &msg, portMAX_DELAY);
+
     vTaskDelete(NULL);
 }

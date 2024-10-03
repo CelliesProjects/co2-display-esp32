@@ -497,14 +497,17 @@ static void handleMessage(const displayMessage &msg)
         break;
     }
 
+    case displayMessage::WEATHER_UPDATE:
+    {
+        log_i("weather update received");
+        log_i("t %.1f icon %s", msg.floatVal, msg.str);
+        break;
+    }    
+
     default:
         log_w("unhandled tft msg type");
     }
 }
-
-// https://github.com/visualcrossing/WeatherApi/blob/master/Arduino_samples_esp32/src/sketch.ino
-
-// https://www.visualcrossing.com/weather/weather-data-services/Wageningen,%20Holland?v=api#
 
 static void updateClock()
 {

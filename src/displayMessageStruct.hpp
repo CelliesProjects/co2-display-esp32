@@ -12,6 +12,7 @@ struct displayMessage
         CO2_HISTORY,
         HUMIDITY_HISTORY,
         TEMPERATURE_HISTORY,
+        WEATHER_UPDATE,
         
     };
     type type;
