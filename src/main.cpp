@@ -22,6 +22,8 @@ extern void displayTask(void *parameter);
 extern QueueHandle_t displayQueue;
 static TaskHandle_t displayTaskHandle = nullptr;
 
+extern void getWeatherDataTask(void *parameter);
+
 // https://docs.espressif.com/projects/esp-idf/en/v4.2/esp32/api-reference/protocols/esp_websocket_client.html
 
 // https://github.com/espressif/esp-idf/blob/v4.2/examples/protocols/websocket/main/websocket_example.c
@@ -122,7 +124,7 @@ void processPayload(char *payload)
 {
     if (payload[1] != ':')
     {
-        Serial.printf("payload contains no separator ':' \n%s", payload);
+        log_e("payload contains no separator ':' \n%s", payload);
         return;
     }
 
@@ -188,7 +190,7 @@ void processPayload(char *payload)
     }
 
     default:
-        Serial.printf("unknown payload type '%c'\n", payload[0]);
+        log_w("unknown payload type '%c'\n", payload[0]);
     }
 }
 
@@ -197,10 +199,10 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
     switch (type)
     {
     case WStype_DISCONNECTED:
-        Serial.printf("[WSc] Disconnected!\n");
+        log_i("[WSc] Disconnected!");
         break;
     case WStype_CONNECTED:
-        Serial.printf("[WSc] Connected to ws://%s:%i%s\n", WEBSOCKET_SERVER, WEBSOCKET_PORT, WEBSOCKET_URL);
+        log_i("[WSc] Connected to ws://%s:%i%s", WEBSOCKET_SERVER, WEBSOCKET_PORT, WEBSOCKET_URL);
         if (history.empty())
             webSocket.sendTXT("G:\n");
         lastWebsocketEventMS = millis();
@@ -210,7 +212,7 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
         lastWebsocketEventMS = millis();
         break;
     case WStype_BIN:
-        Serial.printf("[WSc] get binary length: %u\n", length);
+        log_d("[WSc] get binary length: %u\n", length);
         // hexdump(payload, length);
 
         // send data to server
@@ -231,16 +233,20 @@ void setup()
 {
     Serial.begin(115200);
     Serial.setDebugOutput(true);
-    Serial.printf("connecting to %s\n", WIFI_SSID);
+
+    while (!Serial)
+        vTaskDelay(10);
+
+   log_i("connecting to %s\n", WIFI_SSID);
 
     WiFi.begin(WIFI_SSID, WIFI_PSK);
 
     // mount sd card
     SPI.begin(48, 41, 47);
     if (!SD.begin(42, SPI, 20000000)) // might not run/ be slow at 20MHz - check!
-        Serial.println("SD card not found");
+        log_i("SD card not found");
     else
-        Serial.println("SD card mounted");
+       log_w("SD card mounted");
 
     displayQueue = xQueueCreate(DISPLAY_QUEUE_MAX_ITEMS, sizeof(struct displayMessage));
     if (!displayQueue)
@@ -254,7 +260,7 @@ void setup()
                                   NULL,
                                   4096,
                                   NULL,
-                                  tskIDLE_PRIORITY + 10,
+                                  tskIDLE_PRIORITY, // + 10,
                                   &displayTaskHandle);
 
     if (taskResult != pdPASS)
@@ -268,7 +274,21 @@ void setup()
     while (!WiFi.isConnected())
         vTaskDelay(pdMS_TO_TICKS(10));
 
-    Serial.printf("connected to %s\n", WIFI_SSID);
+    log_i("connected to %s", WIFI_SSID);
+
+    taskResult = xTaskCreate(getWeatherDataTask,
+                             NULL,
+                             4096 * 2,
+                             NULL,
+                             tskIDLE_PRIORITY,
+                             NULL);
+
+    if (taskResult != pdPASS)
+    {
+        log_e("FATAL error! Could not create weatherTask. System HALTED!");
+        while (1)
+            delay(100);
+    }
 
     configTzTime(TIMEZONE, NTP_POOL);
 
@@ -288,7 +308,7 @@ void loop()
 
     if (webSocket.isConnected() && millis() - lastWebsocketEventMS > WEBSOCKET_TIMEOUT)
     {
-        Serial.println("ws timeout");
+        log_i("ws timeout");
         webSocket.disconnect();
         lastWebsocketEventMS = millis();
     }
