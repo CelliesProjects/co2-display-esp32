@@ -234,9 +234,6 @@ void setup()
     Serial.begin(115200);
     Serial.setDebugOutput(true);
 
-    while (!Serial)
-        vTaskDelay(10);
-
    log_i("connecting to %s\n", WIFI_SSID);
 
     WiFi.begin(WIFI_SSID, WIFI_PSK);

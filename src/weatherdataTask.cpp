@@ -64,5 +64,7 @@ void getWeatherDataTask(void *parameter)
     msg.type = displayMessage::WEATHER_UPDATE;
     xQueueSend(displayQueue, &msg, portMAX_DELAY);
 
+    log_i("icon retrieved: %s", msg.str);
+
     vTaskDelete(NULL);
 }
