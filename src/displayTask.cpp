@@ -448,6 +448,35 @@ static void updateTempValue(const int32_t w, const int32_t h, const int32_t x, c
     tempValue.pushSprite(x, y);
 }
 
+static void updateWeatherForecast(const int32_t w, const int32_t h, const int32_t x, const int32_t y, const char *icon, const float temp)
+{
+    static LGFX_Sprite weather(&display);
+
+    if (weather.height() != h || weather.width() != w)
+    {
+        weather.setColorDepth(lgfx::rgb565_2Byte);
+        weather.setPsram(true);
+        if (!weather.createSprite(w, h))
+        {
+            Serial.println("could not resize sprite. halting and catching fire");
+            return;
+        }
+        weather.setFont(&DejaVu24Modded);
+        weather.setTextSize(1);
+        weather.setTextWrap(false, false);
+    }
+    // put the icon in the sprite
+    // put the temp as overlay on top
+    // put the description somewhere
+    weather.clear(0);
+    weather.drawString(icon, 10, 10);
+    char buff[10];
+    snprintf(buff, sizeof(buff), "%.0f°C", temp);
+    weather.drawString(buff, 10, 40);
+
+    weather.pushSprite(x, y);
+}
+
 static void handleMessage(const displayMessage &msg)
 {
     switch (msg.type)
@@ -501,8 +530,9 @@ static void handleMessage(const displayMessage &msg)
     {
         log_i("weather update received");
         log_i("t %.1f icon %s", msg.floatVal, msg.str);
+        updateWeatherForecast(170, 100, 300, 370, msg.str, msg.floatVal);
         break;
-    }    
+    }
 
     default:
         log_w("unhandled tft msg type");
@@ -515,7 +545,6 @@ static void updateClock()
     static struct tm prevTime = {};
     if (getLocalTime(&timeinfo, 0) && prevTime.tm_sec != timeinfo.tm_sec)
     {
-        //getWeatherData();
         constexpr const auto font = &Font7;
         static LGFX_Sprite clock(&display);
 
