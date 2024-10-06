@@ -465,10 +465,19 @@ static void updateWeatherForecast(const int32_t w, const int32_t h, const int32_
         weather.setTextSize(1);
         weather.setTextWrap(false, false);
     }
+    // decode the png into a sprite
+    // https://github.com/lagunax/ESP32-upng
+
+
     // put the icon in the sprite
     // put the temp as overlay on top
     // put the description somewhere
     weather.clear(0);
+
+    weather.drawPng(clear_day_png_start, clear_day_png_end - clear_day_png_start, 10, 10);
+
+    weather.setTextColor(weather.color565(200,200,200));
+
     weather.drawString(icon, 10, 10);
     char buff[10];
     snprintf(buff, sizeof(buff), "%.0f°C", temp);
