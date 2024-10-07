@@ -52,6 +52,8 @@ void getWeatherDataTask(void *parameter)
 
     http.end();
 
+    log_i("query cost %i", int32_t(doc["queryCost"]));
+
     if (doc["days"][0]["icon"].isNull() || doc["days"][0]["temp"].isNull())
     {
         log_w("no values in weather forecast!");
