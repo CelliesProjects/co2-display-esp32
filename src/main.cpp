@@ -2,6 +2,7 @@
 #include <SPI.h>
 #include <SD.h>
 #include <list>
+#include <esp_sntp.h>
 
 #include <WebSocketsClient.h> /* https://github.com/Links2004/arduinoWebSockets */
 
@@ -28,21 +29,39 @@ extern void getWeatherDataTask(void *parameter);
 
 // https://github.com/espressif/esp-idf/blob/v4.2/examples/protocols/websocket/main/websocket_example.c
 
+/*
+   these are the headers for websocket messages
+   a good message has the header on one line followed bij '\n'
+   example: G:\n 
+
+   A: new saved average (C: H: T: ) to add to the history
+   C: current co2 level
+   G: history            used by both for client (request) and server
+   H: current humidity
+   P: ping used to keep the server informed that the client has not yet buggered off
+   T: current temperature
+   timeout is 4 seconds no messages received before client reconnects
+*/
+
 static WebSocketsClient webSocket;
 std::list<struct storageStruct> history;
 
 static auto lastWebsocketEventMS = 0;
 
-/*
-   these are the tags for messages:
-   A: new saved average to add to the history
-   C: current co2 level
-   G: history
-   H: current humidity
-   P: ping used to keep the server informed that the client has not yet buggered off
-   T: current temperature
-   timeout is 4 seconds before client reconnects
-*/
+static auto prevWeatherUpdate = millis();
+
+static void updateWeather()
+{
+    const auto taskResult = xTaskCreate(getWeatherDataTask,
+                                        NULL,
+                                        4096 * 2,
+                                        NULL,
+                                        tskIDLE_PRIORITY,
+                                        NULL);
+    if (taskResult != pdPASS)
+        log_e("Could not create weatherTask");
+}
+
 static void addItemToHistory(char *payload)
 {
     char *pch = strtok(payload, "\n");
@@ -229,12 +248,19 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
     }
 }
 
+static void my_time_sync_notification_cb(void *cb_arg) {
+    // Perform actions after time sync, e.g., log event or trigger action
+    Serial.println("Time synced!");
+    updateWeather();
+    sntp_set_time_sync_notification_cb(NULL);
+}
+
 void setup()
 {
     Serial.begin(115200);
     Serial.setDebugOutput(true);
 
-   log_i("connecting to %s\n", WIFI_SSID);
+    log_i("connecting to %s\n", WIFI_SSID);
 
     WiFi.begin(WIFI_SSID, WIFI_PSK);
 
@@ -243,7 +269,7 @@ void setup()
     if (!SD.begin(42, SPI, 20000000)) // might not run/ be slow at 20MHz - check!
         log_i("SD card not found");
     else
-       log_w("SD card mounted");
+        log_w("SD card mounted");
 
     displayQueue = xQueueCreate(DISPLAY_QUEUE_MAX_ITEMS, sizeof(struct displayMessage));
     if (!displayQueue)
@@ -273,20 +299,7 @@ void setup()
 
     log_i("connected to %s", WIFI_SSID);
 
-    taskResult = xTaskCreate(getWeatherDataTask,
-                             NULL,
-                             4096 * 2,
-                             NULL,
-                             tskIDLE_PRIORITY,
-                             NULL);
-
-    if (taskResult != pdPASS)
-    {
-        log_e("FATAL error! Could not create weatherTask. System HALTED!");
-        while (1)
-            delay(100);
-    }
-
+    sntp_set_time_sync_notification_cb((sntp_sync_time_cb_t)my_time_sync_notification_cb); 
     configTzTime(TIMEZONE, NTP_POOL);
 
     webSocket.begin(WEBSOCKET_SERVER, WEBSOCKET_PORT, WEBSOCKET_URL);
@@ -301,6 +314,14 @@ static TickType_t xLastWakeTime = xTaskGetTickCount();
 
 void loop()
 {
+    const auto WEATHER_UPDATE_INTERVAL_MS = 7200000;
+
+    if (millis() - prevWeatherUpdate > WEATHER_UPDATE_INTERVAL_MS)
+    {
+        updateWeather();
+        prevWeatherUpdate = millis();
+    }
+
     vTaskDelayUntil(&xLastWakeTime, ticksToWait);
 
     if (webSocket.isConnected() && millis() - lastWebsocketEventMS > WEBSOCKET_TIMEOUT)

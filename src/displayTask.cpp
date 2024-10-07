@@ -468,7 +468,6 @@ static void updateWeatherForecast(const int32_t w, const int32_t h, const int32_
     // decode the png into a sprite
     // https://github.com/lagunax/ESP32-upng
 
-
     // put the icon in the sprite
     // put the temp as overlay on top
     // put the description somewhere
@@ -476,11 +475,18 @@ static void updateWeatherForecast(const int32_t w, const int32_t h, const int32_
 
     weather.drawPng(clear_day_png_start, clear_day_png_end - clear_day_png_start, 10, 10);
 
-    weather.setTextColor(weather.color565(20,20,20));
+    weather.setTextColor(weather.color565(20, 20, 20));
 
     char buff[10];
     snprintf(buff, sizeof(buff), "%.0f°C", temp);
     weather.drawString(buff, 70, 70);
+
+    time_t t;
+    struct tm *timeinfo;
+    time(&t);
+    timeinfo = localtime(&t);
+    strftime(buff, sizeof(buff), "%R", timeinfo);
+    weather.drawString(buff, 70, 10);
 
     weather.pushSprite(x, y);
 }
@@ -536,8 +542,6 @@ static void handleMessage(const displayMessage &msg)
 
     case displayMessage::WEATHER_UPDATE:
     {
-        log_i("weather update received");
-        log_i("t %.1f icon %s", msg.floatVal, msg.str);
         updateWeatherForecast(170, 100, 300, 370, msg.str, msg.floatVal);
         break;
     }
