@@ -448,6 +448,62 @@ static void updateTempValue(const int32_t w, const int32_t h, const int32_t x, c
     tempValue.pushSprite(x, y);
 }
 
+struct iconData
+{
+    const uint8_t *start;
+    const uint8_t *end;
+};
+
+static iconData selectIcon(const char *weather)
+{
+    if (strcmp(weather, "clear-day") == 0)
+        return {clear_day_png_start, clear_day_png_end};
+    if (strcmp(weather, "clear-night") == 0)
+        return {clear_night_png_start, clear_night_png_end};
+    if (strcmp(weather, "cloudy") == 0)
+        return {cloudy_png_start, cloudy_png_end};
+    if (strcmp(weather, "fog") == 0)
+        return {fog_png_start, fog_png_end};
+    if (strcmp(weather, "hail") == 0)
+        return {hail_png_start, hail_png_end};
+    if (strcmp(weather, "partly-cloudy-day") == 0)
+        return {partly_cloudy_day_png_start, partly_cloudy_day_png_end};
+    if (strcmp(weather, "partly-cloudy-night") == 0)
+        return {partly_cloudy_night_png_start, partly_cloudy_night_png_end};
+    if (strcmp(weather, "rain") == 0)
+        return {rain_png_start, rain_png_end};
+    if (strcmp(weather, "rain-snow") == 0)
+        return {rain_snow_png_start, rain_snow_png_end};
+    if (strcmp(weather, "rain-snow-showers-day") == 0)
+        return {rain_snow_showers_day_png_start, rain_snow_showers_day_png_end};
+    if (strcmp(weather, "rain-snow-showers-night") == 0)
+        return {rain_snow_showers_night_png_start, rain_snow_showers_night_png_end};
+    if (strcmp(weather, "showers-day") == 0)
+        return {showers_day_png_start, showers_day_png_end};
+    if (strcmp(weather, "showers-night") == 0)
+        return {showers_night_png_start, showers_night_png_end};
+    if (strcmp(weather, "sleet") == 0)
+        return {sleet_png_start, sleet_png_end};
+    if (strcmp(weather, "snow") == 0)
+        return {snow_png_start, snow_png_end};
+    if (strcmp(weather, "snow-showers-day") == 0)
+        return {snow_showers_day_png_start, snow_showers_day_png_end};
+    if (strcmp(weather, "snow-showers-night") == 0)
+        return {snow_showers_night_png_start, snow_showers_night_png_end};
+    if (strcmp(weather, "thunder") == 0)
+        return {thunder_png_start, thunder_png_end};
+    if (strcmp(weather, "thunder-rain") == 0)
+        return {thunder_rain_png_start, thunder_rain_png_end};
+    if (strcmp(weather, "thunder-showers-day") == 0)
+        return {thunder_showers_day_png_start, thunder_showers_day_png_end};
+    if (strcmp(weather, "thunder-showers-night") == 0)
+        return {thunder_showers_night_png_start, thunder_showers_night_png_end};
+    if (strcmp(weather, "wind") == 0)
+        return {wind_png_start, wind_png_end};
+
+    return {nullptr, nullptr}; // Fallback if no match found
+}
+
 static void updateWeatherForecast(const int32_t w, const int32_t h, const int32_t x, const int32_t y, const char *icon, const float temp)
 {
     static LGFX_Sprite weather(&display);
@@ -458,35 +514,28 @@ static void updateWeatherForecast(const int32_t w, const int32_t h, const int32_
         weather.setPsram(true);
         if (!weather.createSprite(w, h))
         {
-            Serial.println("could not resize sprite. halting and catching fire");
+            log_e("could not resize sprite. halting and catching fire");
             return;
         }
         weather.setFont(&DejaVu24Modded);
         weather.setTextSize(1);
         weather.setTextWrap(false, false);
     }
-    // decode the png into a sprite
-    // https://github.com/lagunax/ESP32-upng
 
-    // put the icon in the sprite
-    // put the temp as overlay on top
-    // put the description somewhere
     weather.clear(BACKGROUND_COLOR);
 
-    weather.drawPng(clear_day_png_start, clear_day_png_end - clear_day_png_start, 10, 10);
+    const iconData png = selectIcon(icon);
+    if (png.start && png.end && !weather.drawPng(png.start, png.end - png.start, 10, 10))
+    {
+        log_e("could not decode png");
+        weather.drawString("PNG ERROR!", 10, 10, &DejaVu24Modded);
+    }
 
     weather.setTextColor(weather.color565(20, 20, 20));
 
     char buff[10];
-    snprintf(buff, sizeof(buff), "%.0f°C", temp);
-    weather.drawString(buff, 70, 70);
-
-    time_t t;
-    struct tm *timeinfo;
-    time(&t);
-    timeinfo = localtime(&t);
-    strftime(buff, sizeof(buff), "%R", timeinfo);
-    weather.drawString(buff, 70, 10);
+    snprintf(buff, sizeof(buff), "%.0f°", temp);
+    weather.drawString(buff, 80, 40, &DejaVu40);
 
     weather.pushSprite(x, y);
 }
@@ -600,14 +649,11 @@ void displayTask(void *parameter)
     display.setTextWrap(false, false);
     display.setTextScroll(false);
 
-    // display.drawBmp((uint8_t *)background_bmp, 0,0, 480,480);
-
-    // display.drawBmpFile("background.bmp", 0, 0, 480, 480, 0, 0);
-
     constexpr const auto TICK_RATE_HZ = 50;
 
     constexpr const TickType_t ticksToWait = pdTICKS_TO_MS(1000 / TICK_RATE_HZ);
     static TickType_t xLastWakeTime = xTaskGetTickCount();
+
     while (1)
     {
         vTaskDelayUntil(&xLastWakeTime, ticksToWait);

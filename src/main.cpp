@@ -32,7 +32,7 @@ extern void getWeatherDataTask(void *parameter);
 /*
    these are the headers for websocket messages
    a good message has the header on one line followed bij '\n'
-   example: G:\n 
+   example: G:\n
 
    A: new saved average (C: H: T: ) to add to the history
    C: current co2 level
@@ -48,7 +48,7 @@ std::list<struct storageStruct> history;
 
 static auto lastWebsocketEventMS = 0;
 
-static auto prevWeatherUpdate = millis();
+static auto lastWeatherUpdate = millis();
 
 static void updateWeather()
 {
@@ -248,9 +248,11 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
     }
 }
 
-static void my_time_sync_notification_cb(void *cb_arg) {
-    // Perform actions after time sync, e.g., log event or trigger action
-    Serial.println("Time synced!");
+static void my_time_sync_notification_cb(void *cb_arg)
+{
+
+    log_i("Time synced!");
+
     updateWeather();
     sntp_set_time_sync_notification_cb(NULL);
 }
@@ -299,7 +301,7 @@ void setup()
 
     log_i("connected to %s", WIFI_SSID);
 
-    sntp_set_time_sync_notification_cb((sntp_sync_time_cb_t)my_time_sync_notification_cb); 
+    sntp_set_time_sync_notification_cb((sntp_sync_time_cb_t)my_time_sync_notification_cb);
     configTzTime(TIMEZONE, NTP_POOL);
 
     webSocket.begin(WEBSOCKET_SERVER, WEBSOCKET_PORT, WEBSOCKET_URL);
@@ -314,12 +316,11 @@ static TickType_t xLastWakeTime = xTaskGetTickCount();
 
 void loop()
 {
-    const auto WEATHER_UPDATE_INTERVAL_MS = 7200000;
-
-    if (millis() - prevWeatherUpdate > WEATHER_UPDATE_INTERVAL_MS)
+    const auto WEATHER_UPDATE_INTERVAL_MS = 5000; //7200000;
+    if (millis() - lastWeatherUpdate > WEATHER_UPDATE_INTERVAL_MS)
     {
         updateWeather();
-        prevWeatherUpdate = millis();
+        lastWeatherUpdate = millis();
     }
 
     vTaskDelayUntil(&xLastWakeTime, ticksToWait);
