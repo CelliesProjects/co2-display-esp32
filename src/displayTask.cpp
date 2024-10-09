@@ -145,7 +145,7 @@ static void updateCo2Value(const int32_t w, const int32_t h, const int32_t x, co
     co2Value.fillScreen(1);
     co2Value.setTextDatum(CC_DATUM);
     co2Value.setTextColor(2);
-    co2Value.drawNumber(newValue, co2Value.width() >> 1, (co2Value.height() >> 1) + 4, &DejaVu40);
+    co2Value.drawNumber(newValue, co2Value.width() >> 1, (co2Value.height() >> 1) + 4, &DejaVu40Modded);
 
     const auto xMiddle = co2Value.width() >> 1;
     co2Value.drawString("CO²", xMiddle, 24, &DejaVu24Modded);
@@ -275,7 +275,7 @@ static void updateHumidityValue(const int32_t w, const int32_t h, const int32_t 
 
     humidityValue.setTextDatum(CC_DATUM);
     humidityValue.setTextColor(2);
-    humidityValue.drawNumber(newValue, humidityValue.width() >> 1, (humidityValue.height() >> 1) + 4, &DejaVu40);
+    humidityValue.drawNumber(newValue, humidityValue.width() >> 1, (humidityValue.height() >> 1) + 4, &DejaVu40Modded);
 
     const auto xMiddle = humidityValue.width() >> 1;
     humidityValue.drawString("RH", xMiddle, 24, &DejaVu24Modded);
@@ -426,7 +426,7 @@ static void updateTempValue(const int32_t w, const int32_t h, const int32_t x, c
         return;
 
     // set the 40pt font
-    tempValue.setFont(&DejaVu40);
+    tempValue.setFont(&DejaVu40Modded);
     auto iWidth = tempValue.textWidth(integerStr);
 
     // set the 24pt font
@@ -439,7 +439,7 @@ static void updateTempValue(const int32_t w, const int32_t h, const int32_t x, c
     auto bigNumberOffset = fWidth / 2;
     auto smallNumberOffset = bigNumberOffset - (iWidth + fWidth) / 2;
 
-    tempValue.drawString(integerStr, xMiddle - bigNumberOffset, yMiddle, &DejaVu40);
+    tempValue.drawString(integerStr, xMiddle - bigNumberOffset, yMiddle, &DejaVu40Modded);
     tempValue.drawString(fractionStr, xMiddle - smallNumberOffset, yMiddle - 4, &DejaVu24Modded);
 
     tempValue.drawString("T", xMiddle, 24, &DejaVu24Modded);
@@ -526,16 +526,13 @@ static void updateWeatherForecast(const int32_t w, const int32_t h, const int32_
 
     const iconData png = selectIcon(icon);
     if (png.start && png.end && !weather.drawPng(png.start, png.end - png.start, 10, 10))
-    {
-        log_e("could not decode png");
         weather.drawString("PNG ERROR!", 10, 10, &DejaVu24Modded);
-    }
 
     weather.setTextColor(weather.color565(20, 20, 20));
 
     char buff[10];
     snprintf(buff, sizeof(buff), "%.0f°", temp);
-    weather.drawString(buff, 80, 40, &DejaVu40);
+    weather.drawString(buff, 80, 40, &DejaVu40Modded);
 
     weather.pushSprite(x, y);
 }
@@ -630,7 +627,7 @@ static void updateClock()
         const auto xMiddle = width >> 1;
         const auto yMiddle = height >> 1;
         clock.drawString(timestr, xMiddle, yMiddle, font);
-        strftime(timestr, sizeof(timestr), "%R", &timeinfo); // https://cplusplus.com/reference/ctime/strftime/
+        strftime(timestr, sizeof(timestr), "%R", &timeinfo);
         clock.setTextColor(display.color565(20, 12, 6));
         clock.drawString(timestr, xMiddle, yMiddle, font);
 

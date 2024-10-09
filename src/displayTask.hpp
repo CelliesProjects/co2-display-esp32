@@ -11,6 +11,7 @@
 #include <LovyanGFX.hpp>
 
 #include "fonts/DejaVu24-modded.h" /* contains percent sign ans superscript 2*/
+#include "fonts/DejaVu40-modded.h" /* contains percent sign ans superscript 2*/
 
 static const auto BAR_WIDTH = 2; /* the bars inside a graph */
 static const auto GAP_WIDTH = 2; /* the gap between the bars */
