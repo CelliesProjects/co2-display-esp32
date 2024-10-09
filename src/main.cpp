@@ -52,12 +52,18 @@ static auto lastWeatherUpdate = millis();
 
 static void updateWeather()
 {
+    static TaskHandle_t weathertaskHandle = NULL;
+    if (weathertaskHandle && (eTaskGetState(weathertaskHandle) == eRunning))
+    {
+        log_e("can not start weatherTask - task still running");
+        return;
+    }
     const auto taskResult = xTaskCreate(getWeatherDataTask,
                                         NULL,
                                         4096 * 2,
                                         NULL,
                                         tskIDLE_PRIORITY,
-                                        NULL);
+                                        &weathertaskHandle);
     if (taskResult != pdPASS)
         log_e("Could not create weatherTask");
 }
@@ -67,7 +73,7 @@ static void addItemToHistory(char *payload)
     char *pch = strtok(payload, "\n");
     if (strcmp(pch, "A:"))
     {
-        Serial.println("not a valid item");
+        log_e("not a valid item");
         return;
     }
 
@@ -102,7 +108,7 @@ static void parseAndBuildHistory(char *payload)
     char *pch = strtok(payload, "\n");
     if (strcmp(pch, "G:"))
     {
-        Serial.println("not a history list");
+        log_e("not a history list");
         return;
     }
 
@@ -294,7 +300,7 @@ void setup()
         while (1)
             delay(100);
     }
-    Serial.printf("waiting for WiFi network %s to connect\n", WIFI_SSID);
+    log_i("waiting for WiFi network %s to connect\n", WIFI_SSID);
 
     while (!WiFi.isConnected())
         vTaskDelay(pdMS_TO_TICKS(10));
