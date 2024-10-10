@@ -15,6 +15,6 @@ extern QueueHandle_t displayQueue;
 
 extern std::vector<forecast_t> forecasts;
 
-void getWeatherDataTask(void *parameter);
+void weatherDownloadTask(void *parameter);
 
 #endif

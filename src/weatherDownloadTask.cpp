@@ -1,6 +1,6 @@
-#include "weatherDataTask.hpp"
+#include "weatherDownloadTask.hpp"
 
-void getWeatherDataTask(void *parameter)
+void weatherDownloadTask(void *parameter)
 {
     if (!WiFi.isConnected() || !VISUAL_CROSSING_CITY || !VISUAL_CROSSING_COUNTRY || !VISUAL_CROSSING_API_KEY)
     {
@@ -12,7 +12,7 @@ void getWeatherDataTask(void *parameter)
     client.setInsecure();
 
     HTTPClient http;
-    
+
     {
         String url;
         url.reserve(512);

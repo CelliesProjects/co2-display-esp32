@@ -22,7 +22,7 @@
 #include "displayMessageStruct.hpp"
 
 extern void displayTask(void *parameter);
-extern void getWeatherDataTask(void *parameter);
+extern void weatherDownloadTask(void *parameter);
 
 extern QueueHandle_t displayQueue;
 static TaskHandle_t displayTaskHandle = nullptr;
@@ -60,7 +60,7 @@ void updateWeather()
         log_e("can not start weatherTask - task still running");
         return;
     }
-    const auto taskResult = xTaskCreate(getWeatherDataTask,
+    const auto taskResult = xTaskCreate(weatherDownloadTask,
                                         NULL,
                                         4096 * 2,
                                         NULL,

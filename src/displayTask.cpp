@@ -654,9 +654,7 @@ void displayTask(void *parameter)
         if (forecasts.size() && forecasts[0].time < time(NULL))
         {
             updateWeatherForecast(170, 100, 300, 370, forecasts[0].icon, forecasts[0].temp);
-
             forecasts.erase(forecasts.begin());
-
             if (!forecasts.size())
                 updateWeather();
         }
