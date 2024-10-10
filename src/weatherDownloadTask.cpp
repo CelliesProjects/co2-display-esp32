@@ -41,11 +41,19 @@ void weatherDownloadTask(void *parameter)
         vTaskDelete(NULL);
     }
 
+    const char *currentConditions = "currentConditions";
+    const char *datetimeEpoch = "datetimeEpoch";
+    const char *days = "days";
+    const char *hours = "hours";
+    const char *icon = "icon";
+    const char *queryCost = "queryCost";
+    const char *temp = "temp";
+
     // the json filter: it contains "true" for each value we want to keep
     JsonDocument filter;
-    filter["queryCost"] = true;
-    filter["days"][0]["hours"] = true;
-    filter["currentConditions"] = true;
+    filter[queryCost] = true;
+    filter[days][0][hours] = true;
+    filter[currentConditions] = true;
 
     JsonDocument doc;
     const auto JSON_ERROR = deserializeJson(doc, http.getStream(), DeserializationOption::Filter(filter));
@@ -58,44 +66,41 @@ void weatherDownloadTask(void *parameter)
 
     http.end();
 
-    log_i("query cost %i", int32_t(doc["queryCost"]));
+    log_i("query cost %i", int32_t(doc[queryCost]));
 
     forecasts.clear();
 
     /* only get current conditions first time after boot */
-    static bool firstRun = true; 
+    static bool firstRun = true;
     if (firstRun)
     {
-        if (doc["currentConditions"]["icon"].isNull() ||
-            doc["currentConditions"]["temp"].isNull() ||
-            doc["currentConditions"]["datetimeEpoch"].isNull())
+        if (doc[currentConditions][icon].isNull() ||
+            doc[currentConditions][temp].isNull() ||
+            doc[currentConditions][datetimeEpoch].isNull())
         {
             log_e("missing current condition values, aborting.");
             vTaskDelete(NULL);
         }
 
-        forecast_t first{};
-        snprintf(first.icon, sizeof(first.icon), "%s", doc["currentConditions"]["icon"].as<const char *>());
-        first.temp = doc["currentConditions"]["temp"];
-        first.time = doc["currentConditions"]["datetimeEpoch"];
-        forecasts.push_back(first);
+        forecast_t current{};
+        snprintf(current.icon, sizeof(current.icon), "%s", doc[currentConditions][icon].as<const char *>());
+        current.temp = doc[currentConditions][temp];
+        current.time = doc[currentConditions][datetimeEpoch];
+        forecasts.push_back(current);
         firstRun = false;
     }
 
-    const JsonArray hours = doc["days"][0]["hours"].as<JsonArray>();
-    for (auto const &item : hours)
+    const JsonArray arr = doc[days][0][hours].as<JsonArray>();
+    for (auto const &item : arr)
     {
         forecast_t weather{};
-        const char *datetimeStr = "datetimeEpoch";
-        weather.time = item[datetimeStr].isNull() ? 0 : item[datetimeStr].as<time_t>();
+        weather.time = item[datetimeEpoch].isNull() ? 0 : item[datetimeEpoch].as<time_t>();
 
         if (weather.time <= time(NULL))
             continue;
 
-        const char *tempStr = "temp";
-        weather.temp = item[tempStr].isNull() ? NAN : item[tempStr].as<float>();
-        const char *iconStr = "icon";
-        snprintf(weather.icon, sizeof(weather.icon), "%s", item[iconStr].isNull() ? "" : item[iconStr].as<const char *>());
+        weather.temp = item[temp].isNull() ? NAN : item[temp].as<float>();
+        snprintf(weather.icon, sizeof(weather.icon), "%s", item[icon].isNull() ? "" : item[icon].as<const char *>());
         forecasts.push_back(weather);
     }
     log_i("%i items imported in weather forecast", forecasts.size());
