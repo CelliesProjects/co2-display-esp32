@@ -217,7 +217,7 @@ void processPayload(char *payload)
     }
 
     default:
-        log_w("unknown payload type '%c'\n", payload[0]);
+        log_w("unknown payload type '%c'", payload[0]);
     }
 }
 
@@ -239,7 +239,7 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
         lastWebsocketEventMS = millis();
         break;
     case WStype_BIN:
-        log_d("[WSc] get binary length: %u\n", length);
+        log_d("[WSc] get binary length: %u", length);
         // hexdump(payload, length);
 
         // send data to server
@@ -307,7 +307,7 @@ void setup()
         while (1)
             delay(100);
     }
-    log_i("waiting for WiFi network %s to connect\n", WIFI_SSID);
+    log_i("waiting for WiFi network %s to connect", WIFI_SSID);
 
     while (!WiFi.isConnected())
         vTaskDelay(pdMS_TO_TICKS(10));
