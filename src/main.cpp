@@ -3,6 +3,7 @@
 #include <SD.h>
 #include <list>
 #include <esp_sntp.h>
+#include <vector>
 
 #include <WebSocketsClient.h> /* https://github.com/Links2004/arduinoWebSockets */
 
@@ -17,6 +18,7 @@
 
 #include "secrets.h" /* untracked file containing wifi credentials */
 #include "storageStruct.hpp"
+#include "forecast_t.hpp"
 #include "displayMessageStruct.hpp"
 
 extern void displayTask(void *parameter);
@@ -24,6 +26,8 @@ extern QueueHandle_t displayQueue;
 static TaskHandle_t displayTaskHandle = nullptr;
 
 extern void getWeatherDataTask(void *parameter);
+
+std::vector<forecast_t> forecasts;
 
 // https://docs.espressif.com/projects/esp-idf/en/v4.2/esp32/api-reference/protocols/esp_websocket_client.html
 
@@ -268,6 +272,14 @@ void setup()
     Serial.begin(115200);
     Serial.setDebugOutput(true);
 
+    forecasts.reserve(24);
+    if (forecasts.capacity() != 24)
+    {
+        log_e("could not allocate forecasts. halted!");
+        while (1)
+            delay(100);
+    }
+
     log_i("connecting to %s\n", WIFI_SSID);
 
     WiFi.begin(WIFI_SSID, WIFI_PSK);
@@ -322,13 +334,14 @@ static TickType_t xLastWakeTime = xTaskGetTickCount();
 
 void loop()
 {
-    const auto WEATHER_UPDATE_INTERVAL_MS = 5000; //7200000;
+    /*
+    const auto WEATHER_UPDATE_INTERVAL_MS = 7200000;
     if (millis() - lastWeatherUpdate > WEATHER_UPDATE_INTERVAL_MS)
     {
         updateWeather();
         lastWeatherUpdate = millis();
     }
-
+    */
     vTaskDelayUntil(&xLastWakeTime, ticksToWait);
 
     if (webSocket.isConnected() && millis() - lastWebsocketEventMS > WEBSOCKET_TIMEOUT)
