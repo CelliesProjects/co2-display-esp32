@@ -256,11 +256,8 @@ void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
     }
 }
 
-static void my_time_sync_notification_cb(void *cb_arg)
+static void ntpSynced(void *cb_arg)
 {
-
-    log_i("Time synced!");
-
     updateWeather();
     sntp_set_time_sync_notification_cb(NULL);
 }
@@ -301,7 +298,7 @@ void setup()
                                   NULL,
                                   4096,
                                   NULL,
-                                  tskIDLE_PRIORITY, // + 10,
+                                  tskIDLE_PRIORITY,
                                   &displayTaskHandle);
 
     if (taskResult != pdPASS)
@@ -317,7 +314,7 @@ void setup()
 
     log_i("connected to %s", WIFI_SSID);
 
-    sntp_set_time_sync_notification_cb((sntp_sync_time_cb_t)my_time_sync_notification_cb);
+    sntp_set_time_sync_notification_cb((sntp_sync_time_cb_t)ntpSynced);
     configTzTime(TIMEZONE, NTP_POOL);
 
     webSocket.begin(WEBSOCKET_SERVER, WEBSOCKET_PORT, WEBSOCKET_URL);
