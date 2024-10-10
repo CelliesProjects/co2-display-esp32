@@ -22,10 +22,10 @@
 #include "displayMessageStruct.hpp"
 
 extern void displayTask(void *parameter);
+extern void getWeatherDataTask(void *parameter);
+
 extern QueueHandle_t displayQueue;
 static TaskHandle_t displayTaskHandle = nullptr;
-
-extern void getWeatherDataTask(void *parameter);
 
 std::vector<forecast_t> forecasts;
 
@@ -52,9 +52,7 @@ std::list<struct storageStruct> history;
 
 static auto lastWebsocketEventMS = 0;
 
-static auto lastWeatherUpdate = millis();
-
-static void updateWeather()
+void updateWeather()
 {
     static TaskHandle_t weathertaskHandle = NULL;
     if (weathertaskHandle && (eTaskGetState(weathertaskHandle) == eRunning))
@@ -334,14 +332,6 @@ static TickType_t xLastWakeTime = xTaskGetTickCount();
 
 void loop()
 {
-    /*
-    const auto WEATHER_UPDATE_INTERVAL_MS = 7200000;
-    if (millis() - lastWeatherUpdate > WEATHER_UPDATE_INTERVAL_MS)
-    {
-        updateWeather();
-        lastWeatherUpdate = millis();
-    }
-    */
     vTaskDelayUntil(&xLastWakeTime, ticksToWait);
 
     if (webSocket.isConnected() && millis() - lastWebsocketEventMS > WEBSOCKET_TIMEOUT)

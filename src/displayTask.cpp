@@ -590,12 +590,6 @@ static void handleMessage(const displayMessage &msg)
         break;
     }
 
-    case displayMessage::WEATHER_UPDATE:
-    {
-        updateWeatherForecast(170, 100, 300, 370, msg.str, msg.floatVal);
-        break;
-    }
-
     default:
         log_w("unhandled tft msg type");
     }
@@ -657,6 +651,16 @@ void displayTask(void *parameter)
 
     while (1)
     {
+        if (forecasts.size() && forecasts[0].time < time(NULL))
+        {
+            updateWeatherForecast(170, 100, 300, 370, forecasts[0].icon, forecasts[0].temp);
+
+            forecasts.erase(forecasts.begin());
+
+            if (!forecasts.size())
+                updateWeather();
+        }
+
         vTaskDelayUntil(&xLastWakeTime, ticksToWait);
 
         static struct displayMessage msg;

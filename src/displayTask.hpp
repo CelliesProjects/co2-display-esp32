@@ -3,8 +3,10 @@
 
 #include <Arduino.h>
 #include <list>
+#include <vector>
 
 #include "storageStruct.hpp"
+#include "forecast_t.hpp"
 #include "displayMessageStruct.hpp"
 
 #include "LGFX_ESP32S3_RGB_GUITION_480x480_ST7701s_GT911.h"
@@ -19,7 +21,9 @@ static const auto GAP_WIDTH = 2; /* the gap between the bars */
 static const auto GRAPH_WIDTH = 370;
 static const auto GRAPH_HEIGHT = 110;
 
+extern std::vector<forecast_t> forecasts;
 extern std::list<struct storageStruct> history;
+extern void updateWeather();
 
 static LGFX display;
 
