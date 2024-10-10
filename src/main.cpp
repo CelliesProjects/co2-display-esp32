@@ -1,8 +1,8 @@
 #include <Arduino.h>
 #include <SPI.h>
 #include <SD.h>
-#include <list>
 #include <esp_sntp.h>
+#include <list>
 #include <vector>
 
 #include <WebSocketsClient.h> /* https://github.com/Links2004/arduinoWebSockets */
@@ -13,8 +13,8 @@
 #define WEBSOCKET_TIMEOUT 4000
 
 #define HISTORY_MAX_ITEMS 180
-
 #define DISPLAY_QUEUE_MAX_ITEMS 8
+#define FORECASTS_MAX_ITEMS 6
 
 #include "secrets.h" /* untracked file containing wifi credentials */
 #include "storageStruct.hpp"
@@ -27,30 +27,11 @@ extern void weatherDownloadTask(void *parameter);
 extern QueueHandle_t displayQueue;
 static TaskHandle_t displayTaskHandle = nullptr;
 
-std::vector<forecast_t> forecasts;
-
-// https://docs.espressif.com/projects/esp-idf/en/v4.2/esp32/api-reference/protocols/esp_websocket_client.html
-
-// https://github.com/espressif/esp-idf/blob/v4.2/examples/protocols/websocket/main/websocket_example.c
-
-/*
-   these are the headers for websocket messages
-   a good message has the header on one line followed bij '\n'
-   example: G:\n
-
-   A: new saved average (C: H: T: ) to add to the history
-   C: current co2 level
-   G: history            used by both for client (request) and server
-   H: current humidity
-   P: ping used to keep the server informed that the client has not yet buggered off
-   T: current temperature
-   timeout is 4 seconds no messages received before client reconnects
-*/
-
 static WebSocketsClient webSocket;
-std::list<struct storageStruct> history;
-
 static auto lastWebsocketEventMS = 0;
+
+std::vector<forecast_t> forecasts;
+std::list<struct storageStruct> history;
 
 void updateWeather()
 {
@@ -147,7 +128,7 @@ static void parseAndBuildHistory(char *payload)
     }
 }
 
-void processPayload(char *payload)
+static void processPayload(char *payload)
 {
     if (payload[1] != ':')
     {
@@ -221,7 +202,7 @@ void processPayload(char *payload)
     }
 }
 
-void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
+static void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
 {
     switch (type)
     {
@@ -267,10 +248,10 @@ void setup()
     Serial.begin(115200);
     Serial.setDebugOutput(true);
 
-    forecasts.reserve(24);
-    if (forecasts.capacity() != 24)
+    forecasts.reserve(FORECASTS_MAX_ITEMS);
+    if (forecasts.capacity() != FORECASTS_MAX_ITEMS)
     {
-        log_e("could not allocate forecasts. halted!");
+        log_e("could not allocate %i forecasts. halted!", FORECASTS_MAX_ITEMS);
         while (1)
             delay(100);
     }

@@ -1,5 +1,32 @@
 #include "weatherDownloadTask.hpp"
 
+static const char *currentConditions = "currentConditions";
+static const char *datetimeEpoch = "datetimeEpoch";
+static const char *days = "days";
+static const char *hours = "hours";
+static const char *icon = "icon";
+static const char *queryCost = "queryCost";
+static const char *temp = "temp";
+
+static void addItemsFromArray(JsonArray const &arr)
+{
+    for (auto const &item : arr)
+    {
+        if (forecasts.size() == forecasts.capacity())
+            break;
+            
+        forecast_t weather{};
+        weather.time = item[datetimeEpoch].isNull() ? 0 : item[datetimeEpoch].as<time_t>();
+
+        if (weather.time <= time(NULL))
+            continue;
+
+        weather.temp = item[temp].isNull() ? NAN : item[temp].as<float>();
+        snprintf(weather.icon, sizeof(weather.icon), "%s", item[icon].isNull() ? "" : item[icon].as<const char *>());
+        forecasts.push_back(weather);
+    }
+}
+
 void weatherDownloadTask(void *parameter)
 {
     if (!WiFi.isConnected() || !VISUAL_CROSSING_CITY || !VISUAL_CROSSING_COUNTRY || !VISUAL_CROSSING_API_KEY)
@@ -41,18 +68,11 @@ void weatherDownloadTask(void *parameter)
         vTaskDelete(NULL);
     }
 
-    const char *currentConditions = "currentConditions";
-    const char *datetimeEpoch = "datetimeEpoch";
-    const char *days = "days";
-    const char *hours = "hours";
-    const char *icon = "icon";
-    const char *queryCost = "queryCost";
-    const char *temp = "temp";
-
     // the json filter: it contains "true" for each value we want to keep
     JsonDocument filter;
     filter[queryCost] = true;
     filter[days][0][hours] = true;
+    filter[days][1][hours] = true;
     filter[currentConditions] = true;
 
     JsonDocument doc;
@@ -90,20 +110,14 @@ void weatherDownloadTask(void *parameter)
         firstRun = false;
     }
 
-    const JsonArray arr = doc[days][0][hours].as<JsonArray>();
-    for (auto const &item : arr)
-    {
-        forecast_t weather{};
-        weather.time = item[datetimeEpoch].isNull() ? 0 : item[datetimeEpoch].as<time_t>();
+    JsonArray arr = doc[days][0][hours].as<JsonArray>();
+    if (arr.size())
+        addItemsFromArray(arr);
 
-        if (weather.time <= time(NULL))
-            continue;
+    arr = doc[days][1][hours].as<JsonArray>();
+    if (arr.size())
+        addItemsFromArray(arr);
 
-        weather.temp = item[temp].isNull() ? NAN : item[temp].as<float>();
-        snprintf(weather.icon, sizeof(weather.icon), "%s", item[icon].isNull() ? "" : item[icon].as<const char *>());
-        forecasts.push_back(weather);
-    }
     log_i("%i items imported in weather forecast", forecasts.size());
-
     vTaskDelete(NULL);
 }
