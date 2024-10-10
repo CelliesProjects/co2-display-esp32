@@ -1,7 +1,5 @@
 #include "weatherDataTask.hpp"
 
-// https://github.com/visualcrossing/WeatherApi/blob/master/Arduino_samples_esp32/src/sketch.ino
-
 void getWeatherDataTask(void *parameter)
 {
     if (!WiFi.isConnected() || !VISUAL_CROSSING_CITY || !VISUAL_CROSSING_COUNTRY || !VISUAL_CROSSING_API_KEY)
@@ -11,9 +9,10 @@ void getWeatherDataTask(void *parameter)
     }
 
     WiFiClientSecure client;
-    client.setInsecure(); // TODO: add root certs
+    client.setInsecure();
 
     HTTPClient http;
+    
     {
         String url;
         url.reserve(512);
@@ -61,25 +60,28 @@ void getWeatherDataTask(void *parameter)
 
     log_i("query cost %i", int32_t(doc["queryCost"]));
 
-    if (doc["currentConditions"]["icon"].isNull() ||
-        doc["currentConditions"]["temp"].isNull() ||
-        doc["currentConditions"]["datetimeEpoch"].isNull())
-    {
-        log_e("missing current condition values, aborting.");
-        vTaskDelete(NULL);
-    }
-
     forecasts.clear();
 
-    // add current conditions to forecasts
-    forecast_t first{};
-    const char *str = doc["currentConditions"]["icon"].as<const char *>();
-    snprintf(first.icon, sizeof(first.icon), "%s", str);
-    first.temp = doc["currentConditions"]["temp"];
-    first.time = doc["currentConditions"]["datetimeEpoch"];
-    forecasts.push_back(first);
+    /* only get current conditions first time after boot */
+    static bool firstRun = true; 
+    if (firstRun)
+    {
+        if (doc["currentConditions"]["icon"].isNull() ||
+            doc["currentConditions"]["temp"].isNull() ||
+            doc["currentConditions"]["datetimeEpoch"].isNull())
+        {
+            log_e("missing current condition values, aborting.");
+            vTaskDelete(NULL);
+        }
 
-    // now iterate over the hourly values and add them to the vector
+        forecast_t first{};
+        snprintf(first.icon, sizeof(first.icon), "%s", doc["currentConditions"]["icon"].as<const char *>());
+        first.temp = doc["currentConditions"]["temp"];
+        first.time = doc["currentConditions"]["datetimeEpoch"];
+        forecasts.push_back(first);
+        firstRun = false;
+    }
+
     const JsonArray hours = doc["days"][0]["hours"].as<JsonArray>();
     for (auto const &item : hours)
     {
