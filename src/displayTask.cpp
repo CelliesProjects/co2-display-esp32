@@ -527,14 +527,18 @@ static void updateWeatherForecast(const int32_t w, const int32_t h, const int32_
 
     weather.clear(BACKGROUND_COLOR);
 
+    weather.setTextColor(0);
+    weather.drawCenterString("weather forecast by", weather.width() >> 1, 0, &DejaVu12);
+    weather.drawCenterString("visualcrossing.com", weather.width() >> 1, weather.height() - 13, &DejaVu12);
+
     const iconData png = selectIcon(icon);
-    if (png.start && png.end && !weather.drawPng(png.start, png.end - png.start, 10, 10))
-        weather.drawString("PNG ERROR!", 10, 10, &DejaVu24Modded);
+    if (png.start && png.end && !weather.drawPng(png.start, png.end - png.start, 10, 15))
+        weather.drawString("PNG ERROR!", 10, 15, &DejaVu12);
 
     weather.setTextColor(weather.color565(20, 20, 20));
 
     char buff[10];
-    snprintf(buff, sizeof(buff), "%.0f°", temp);
+    snprintf(buff, sizeof(buff), "%.0 f°", temp);
     weather.setTextDatum(CC_DATUM);
     weather.drawString(buff, 120, weather.height() >> 1, &DejaVu40Modded);
 
