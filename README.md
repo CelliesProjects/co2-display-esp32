@@ -92,6 +92,15 @@ I dont know if there is a way to share the GPIOs between the tft and dac
 
 More info:
 
+
+https://docs.espressif.com/projects/esp-idf/en/v4.2/esp32/api-reference/protocols/esp_websocket_client.html
+
+https://github.com/espressif/esp-idf/blob/v4.2/examples/protocols/websocket/main/websocket_example.c
+
+https://www.visualcrossing.com/weather/weather-data-services/
+
+https://github.com/visualcrossing/WeatherApi/blob/master/Arduino_samples_esp32/src/sketch.ino
+
 https://github.com/esp-arduino-libs/ESP32_Display_Panel/blob/master/docs/Board_Instructions.md#shenzhen-jingcai-intelligent
 
 https://homeding.github.io/boards/esp32s3/panel-4848S040.htm
@@ -115,3 +124,20 @@ https://github.com/Makerfabs/ESP32-S3-Parallel-TFT-with-Touch-4inch/blob/main/ex
 
 ## About the capacitors on the sensor board
 https://picaxeforum.co.uk/threads/5v-voltage-regulator-capacitor-values.30154/
+
+
+
+   these are the headers for websocket messages
+
+   a good message has the header on one line followed bij '\n'
+
+   example: G:\n
+
+   -  A: new saved average (C: H: T: ) to add to the history
+   -  C: current co2 level
+   -  G: history            used by both for client (request) and server
+   -  H: current humidity
+   -  P: ping used to keep the server informed that the client has not yet buggered off
+   -  T: current temperature
+
+timeout is 4 seconds no messages received before client reconnects

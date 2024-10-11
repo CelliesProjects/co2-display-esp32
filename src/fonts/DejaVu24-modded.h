@@ -5,8 +5,11 @@ This data has been converted to AdafruitGFX font format from DejaVuSans.ttf.
 */
 
 /*
- * modded by cellie to add a percent sign and super script 2
- * using https://tchapi.github.io/Adafruit-GFX-Font-Customiser/
+ * Modded by cellie to add a percent sign 
+ * And subscript 2 (which would normally be '²' or 0xB2 )  
+ * So CO² will be rendered with a subscript 2 instead of a superscript one
+ *  
+ * Modded using https://tchapi.github.io/Adafruit-GFX-Font-Customiser/
  * '²' 
  * '°'
  * */
@@ -342,10 +345,10 @@ const GFXglyph DejaVu24Glyphs[] PROGMEM = {
   {     0,   0,   0,   0,    0,    0 },   // 0xAF '¯'
   {  2154,   6,   7,   8,    1,  -17 },   // 0xB0 '°'
   {     0,   0,   0,   0,    0,    0 },   // 0xB1 '±'
-  {  2160,   6,   7,   8,    1,  -17 }    // 0xB2 '²'
+  {  2160,   6,   7,   8,    1,   -3 }    // 0xB2 '²'
 };
 
 const GFXfont DejaVu24Modded PROGMEM = {
-  (uint8_t*)DejaVu24Bitmaps, 
-  (GFXglyph*)DejaVu24Glyphs, 0x20, 0xB2,  25 };
+  (uint8_t*)DejaVu24Bitmaps,  
+  (GFXglyph*)DejaVu24Glyphs, 0x20, 0xB2,   25 };
 

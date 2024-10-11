@@ -1,0 +1,1 @@
+These icons are downloaded from https://github.com/visualcrossing/WeatherIcons/blob/main/PNG/1st%20Set%20-%20Color/ and are available under a [LGPL-3.0 license](https://github.com/visualcrossing/WeatherIcons/blob/main/LICENSE).

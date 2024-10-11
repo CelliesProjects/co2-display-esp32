@@ -145,8 +145,9 @@ static void updateCo2Value(const int32_t w, const int32_t h, const int32_t x, co
     co2Value.fillScreen(1);
     co2Value.setTextDatum(CC_DATUM);
     co2Value.setTextColor(2);
-    co2Value.drawNumber(newValue, co2Value.width() >> 1, (co2Value.height() >> 1) + 4, &DejaVu40);
+    co2Value.drawNumber(newValue, co2Value.width() >> 1, (co2Value.height() >> 1) + 4, &DejaVu40Modded);
 
+    co2Value.setTextColor(0);
     const auto xMiddle = co2Value.width() >> 1;
     co2Value.drawString("CO²", xMiddle, 24, &DejaVu24Modded);
     co2Value.drawString("ppm", xMiddle, co2Value.height() - 24, &DejaVu24Modded);
@@ -275,9 +276,10 @@ static void updateHumidityValue(const int32_t w, const int32_t h, const int32_t 
 
     humidityValue.setTextDatum(CC_DATUM);
     humidityValue.setTextColor(2);
-    humidityValue.drawNumber(newValue, humidityValue.width() >> 1, (humidityValue.height() >> 1) + 4, &DejaVu40);
+    humidityValue.drawNumber(newValue, humidityValue.width() >> 1, (humidityValue.height() >> 1) + 4, &DejaVu40Modded);
 
     const auto xMiddle = humidityValue.width() >> 1;
+    humidityValue.setTextColor(0);
     humidityValue.drawString("RH", xMiddle, 24, &DejaVu24Modded);
     humidityValue.drawString("%", xMiddle, humidityValue.height() - 24, &DejaVu24Modded);
 
@@ -410,7 +412,6 @@ static void updateTempValue(const int32_t w, const int32_t h, const int32_t x, c
     tempValue.fillScreen(1);
 
     tempValue.setTextDatum(CC_DATUM);
-    tempValue.setTextColor(2);
 
     char buffer[20];
     snprintf(buffer, sizeof(buffer), "%.1f", newValue);
@@ -426,7 +427,7 @@ static void updateTempValue(const int32_t w, const int32_t h, const int32_t x, c
         return;
 
     // set the 40pt font
-    tempValue.setFont(&DejaVu40);
+    tempValue.setFont(&DejaVu40Modded);
     auto iWidth = tempValue.textWidth(integerStr);
 
     // set the 24pt font
@@ -439,13 +440,109 @@ static void updateTempValue(const int32_t w, const int32_t h, const int32_t x, c
     auto bigNumberOffset = fWidth / 2;
     auto smallNumberOffset = bigNumberOffset - (iWidth + fWidth) / 2;
 
-    tempValue.drawString(integerStr, xMiddle - bigNumberOffset, yMiddle, &DejaVu40);
+    tempValue.setTextColor(2);
+    tempValue.drawString(integerStr, xMiddle - bigNumberOffset, yMiddle, &DejaVu40Modded);
     tempValue.drawString(fractionStr, xMiddle - smallNumberOffset, yMiddle - 4, &DejaVu24Modded);
 
+    tempValue.setTextColor(0);
     tempValue.drawString("T", xMiddle, 24, &DejaVu24Modded);
     tempValue.drawString("°C", xMiddle, tempValue.height() - 24, &DejaVu24Modded);
 
     tempValue.pushSprite(x, y);
+}
+
+struct iconData
+{
+    const uint8_t *start;
+    const uint8_t *end;
+};
+
+static iconData selectIcon(const char *weather)
+{
+    if (strcmp(weather, "clear-day") == 0)
+        return {clear_day_png_start, clear_day_png_end};
+    if (strcmp(weather, "clear-night") == 0)
+        return {clear_night_png_start, clear_night_png_end};
+    if (strcmp(weather, "cloudy") == 0)
+        return {cloudy_png_start, cloudy_png_end};
+    if (strcmp(weather, "fog") == 0)
+        return {fog_png_start, fog_png_end};
+    if (strcmp(weather, "hail") == 0)
+        return {hail_png_start, hail_png_end};
+    if (strcmp(weather, "partly-cloudy-day") == 0)
+        return {partly_cloudy_day_png_start, partly_cloudy_day_png_end};
+    if (strcmp(weather, "partly-cloudy-night") == 0)
+        return {partly_cloudy_night_png_start, partly_cloudy_night_png_end};
+    if (strcmp(weather, "rain") == 0)
+        return {rain_png_start, rain_png_end};
+    if (strcmp(weather, "rain-snow") == 0)
+        return {rain_snow_png_start, rain_snow_png_end};
+    if (strcmp(weather, "rain-snow-showers-day") == 0)
+        return {rain_snow_showers_day_png_start, rain_snow_showers_day_png_end};
+    if (strcmp(weather, "rain-snow-showers-night") == 0)
+        return {rain_snow_showers_night_png_start, rain_snow_showers_night_png_end};
+    if (strcmp(weather, "showers-day") == 0)
+        return {showers_day_png_start, showers_day_png_end};
+    if (strcmp(weather, "showers-night") == 0)
+        return {showers_night_png_start, showers_night_png_end};
+    if (strcmp(weather, "sleet") == 0)
+        return {sleet_png_start, sleet_png_end};
+    if (strcmp(weather, "snow") == 0)
+        return {snow_png_start, snow_png_end};
+    if (strcmp(weather, "snow-showers-day") == 0)
+        return {snow_showers_day_png_start, snow_showers_day_png_end};
+    if (strcmp(weather, "snow-showers-night") == 0)
+        return {snow_showers_night_png_start, snow_showers_night_png_end};
+    if (strcmp(weather, "thunder") == 0)
+        return {thunder_png_start, thunder_png_end};
+    if (strcmp(weather, "thunder-rain") == 0)
+        return {thunder_rain_png_start, thunder_rain_png_end};
+    if (strcmp(weather, "thunder-showers-day") == 0)
+        return {thunder_showers_day_png_start, thunder_showers_day_png_end};
+    if (strcmp(weather, "thunder-showers-night") == 0)
+        return {thunder_showers_night_png_start, thunder_showers_night_png_end};
+    if (strcmp(weather, "wind") == 0)
+        return {wind_png_start, wind_png_end};
+
+    return {nullptr, nullptr}; // Fallback if no match found
+}
+
+static void updateWeatherForecast(const int32_t w, const int32_t h, const int32_t x, const int32_t y, const char *icon, const float temp)
+{
+    static LGFX_Sprite weather(&display);
+
+    if (weather.height() != h || weather.width() != w)
+    {
+        weather.setColorDepth(lgfx::rgb565_2Byte);
+        weather.setPsram(true);
+        if (!weather.createSprite(w, h))
+        {
+            log_e("could not resize sprite. halting and catching fire");
+            return;
+        }
+        weather.setFont(&DejaVu24Modded);
+        weather.setTextSize(1);
+        weather.setTextWrap(false, false);
+    }
+
+    weather.clear(BACKGROUND_COLOR);
+
+    weather.setTextColor(0);
+    weather.drawCenterString("weather forecast by", weather.width() >> 1, 0, &DejaVu12);
+    weather.drawCenterString("visualcrossing.com", weather.width() >> 1, weather.height() - 13, &DejaVu12);
+
+    const iconData png = selectIcon(icon);
+    if (png.start && png.end && !weather.drawPng(png.start, png.end - png.start, 10, 15))
+        weather.drawString("PNG ERROR!", 10, 15, &DejaVu12);
+
+    weather.setTextColor(weather.color565(20, 20, 20));
+
+    char buff[10];
+    snprintf(buff, sizeof(buff), "%.0 f°", temp);
+    weather.setTextDatum(CC_DATUM);
+    weather.drawString(buff, 120, weather.height() >> 1, &DejaVu40Modded);
+
+    weather.pushSprite(x, y);
 }
 
 static void handleMessage(const displayMessage &msg)
@@ -522,7 +619,7 @@ static void updateClock()
             const auto result = clock.createSprite(width, height);
             if (!result)
             {
-                log_e("clould not create sprite");
+                log_e("could not create sprite");
                 return;
             }
             clock.clear(BACKGROUND_COLOR);
@@ -532,7 +629,7 @@ static void updateClock()
         const auto xMiddle = width >> 1;
         const auto yMiddle = height >> 1;
         clock.drawString(timestr, xMiddle, yMiddle, font);
-        strftime(timestr, sizeof(timestr), "%R", &timeinfo); // https://cplusplus.com/reference/ctime/strftime/
+        strftime(timestr, sizeof(timestr), "%R", &timeinfo);
         clock.setTextColor(display.color565(20, 12, 6));
         clock.drawString(timestr, xMiddle, yMiddle, font);
 
@@ -551,16 +648,21 @@ void displayTask(void *parameter)
     display.setTextWrap(false, false);
     display.setTextScroll(false);
 
-    // display.drawBmp((uint8_t *)background_bmp, 0,0, 480,480);
-
-    // display.drawBmpFile("background.bmp", 0, 0, 480, 480, 0, 0);
-
     constexpr const auto TICK_RATE_HZ = 50;
 
     constexpr const TickType_t ticksToWait = pdTICKS_TO_MS(1000 / TICK_RATE_HZ);
     static TickType_t xLastWakeTime = xTaskGetTickCount();
+
     while (1)
     {
+        if (forecasts.size() && forecasts[0].time < time(NULL))
+        {
+            updateWeatherForecast(170, 100, 300, 370, forecasts[0].icon, forecasts[0].temp);
+            forecasts.erase(forecasts.begin());
+            if (!forecasts.size())
+                updateWeather();
+        }
+
         vTaskDelayUntil(&xLastWakeTime, ticksToWait);
 
         static struct displayMessage msg;

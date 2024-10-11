@@ -11,8 +11,7 @@ struct displayMessage
         HUMIDITY,
         CO2_HISTORY,
         HUMIDITY_HISTORY,
-        TEMPERATURE_HISTORY,
-        
+        TEMPERATURE_HISTORY,        
     };
     type type;
     char str[50];
