@@ -538,7 +538,7 @@ static void updateWeatherForecast(const int32_t w, const int32_t h, const int32_
     weather.setTextColor(weather.color565(20, 20, 20));
 
     char buff[10];
-    snprintf(buff, sizeof(buff), "%.0 f°", temp);
+    snprintf(buff, sizeof(buff), "%.0f°", temp);
     weather.setTextDatum(CC_DATUM);
     weather.drawString(buff, 120, weather.height() >> 1, &DejaVu40Modded);
 
