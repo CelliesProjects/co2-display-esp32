@@ -4,29 +4,31 @@
 
 ![SAM_3242](https://github.com/user-attachments/assets/76c282f7-baca-4862-9028-22992eba1542)
 
-This project is designed to measure and display CO2 levels using an ESP32 microcontroller.<br>
+This project is designed to display CO2 levels using a [Panel ESP32-4848S040](https://homeding.github.io/boards/esp32s3/panel-4848S040.htm).<br>
 It reads data from a Senseair S8 CO2 sensor and an SHT31 temperature and humidity sensor, displaying the real-time readings.
 
-The sensors are on separate sensor board and are read over websocket.<br>
-This setup is chosen because the CO2 sensor uses over 300mA when reading and this made the tft screen flicker during the reading.
-
+Sensors are on separate sensor board and are read over websocket.<br>
+This setup is chosen because the CO2 sensor uses over 300mA when reading and this made the tft screen flicker during the reading.<br>
 The sensor code is still private atm. but will be made public soon.
+
+There is also weather forecast data shown which is retrieved from [visualcrossing.com](https://www.visualcrossing.com/).<br>
+You will need to setup an account with visualcrossing to be able to download weather data but registration and 1000 free API credits per day are included in the free accounts.<br>
+You can setup your free account [here](https://www.visualcrossing.com/weather-api).
 
 ## Features
 
-- CO2 monitoring with the Senseair S8 sensor.
-- Temperature and humidity monitoring with the SHT31 sensor.
-- Built using the ESP32 microcontroller.
-- Configured with PlatformIO for easy development.
+-  CO2 monitoring with the Senseair S8 sensor.
+-  Temperature and humidity monitoring with the SHT31 sensor.
+-  Configured with PlatformIO for easy development.
 
 ### Installation
 
-1. Clone this repository.<br>
+1.  Clone this repository.
 ```bash
 git clone https://github.com/CelliesProjects/co2-display-esp32.git
 ```
 
- 2. Add a secrets.h file to the include folder with the following content:<br>
+ 2.  Add a secrets.h file to the include folder with the following content:<br>
  ```c++
 #ifndef SECRETS
 #define SECRETS
