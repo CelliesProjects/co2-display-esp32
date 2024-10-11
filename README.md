@@ -1,5 +1,7 @@
 # co2 display esp32
 
+[![Codacy Badge](https://api.codacy.com/project/badge/Grade/2681ce16ae05470f9b205de81a437ed3)](https://app.codacy.com/gh/CelliesProjects/co2-display-esp32?utm_source=github.com&utm_medium=referral&utm_content=CelliesProjects/co2-display-esp32&utm_campaign=Badge_Grade)
+
 ![SAM_3242](https://github.com/user-attachments/assets/76c282f7-baca-4862-9028-22992eba1542)
 
 This project is designed to measure and display CO2 levels using an ESP32 microcontroller.<br>
