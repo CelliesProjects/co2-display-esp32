@@ -110,11 +110,11 @@ static void updateCo2History(const int32_t w, const int32_t h, const int32_t x, 
     co2Graph.setTextDatum(CC_DATUM);
     co2Graph.setTextWrap(false, false);
     co2Graph.setTextColor(co2Graph.color565(192, 192, 192), 0);
-    for (auto hgrid = 500; hgrid < HIGHEST_LEVEL_PPM; hgrid += 500)
+    for (auto gridLineHeight = 500; gridLineHeight < HIGHEST_LEVEL_PPM; gridLineHeight += 500)
     {
-        const auto ypos = mapf(hgrid, LOWEST_LEVEL_PPM, HIGHEST_LEVEL_PPM, co2Graph.height(), 0);
+        const auto ypos = mapf(gridLineHeight, LOWEST_LEVEL_PPM, HIGHEST_LEVEL_PPM, co2Graph.height(), 0);
         co2Graph.writeFastHLine(0, ypos, co2Graph.width(), co2Graph.color565(0, 0, 64));
-        co2Graph.drawNumber(hgrid, co2Graph.width() >> 1, ypos, &DejaVu12);
+        co2Graph.drawNumber(gridLineHeight, co2Graph.width() >> 1, ypos, &DejaVu12);
     }
 
     co2Graph.pushSprite(x, y);
@@ -239,11 +239,11 @@ static void updateHumidityHistory(const int32_t w, const int32_t h, const int32_
     humidityGraph.setTextDatum(CC_DATUM);
     humidityGraph.setTextWrap(false, false);
     humidityGraph.setTextColor(humidityGraph.color565(192, 192, 192), 0);
-    for (auto hgrid = 25; hgrid < HIGHEST_LEVEL_H; hgrid += 25)
+    for (auto gridLineHeight = 25; gridLineHeight < HIGHEST_LEVEL_H; gridLineHeight += 25)
     {
-        const auto ypos = mapf(hgrid, LOWEST_LEVEL_H, HIGHEST_LEVEL_H, humidityGraph.height(), 0);
+        const auto ypos = mapf(gridLineHeight, LOWEST_LEVEL_H, HIGHEST_LEVEL_H, humidityGraph.height(), 0);
         humidityGraph.writeFastHLine(0, ypos, humidityGraph.width(), humidityGraph.color565(0, 0, 64));
-        humidityGraph.drawNumber(hgrid, humidityGraph.width() >> 1, ypos, &DejaVu12);
+        humidityGraph.drawNumber(gridLineHeight, humidityGraph.width() >> 1, ypos, &DejaVu12);
     }
 
     humidityGraph.pushSprite(x, y);
@@ -375,11 +375,11 @@ static void updateTempHistory(const int32_t w, const int32_t h, const int32_t x,
     tempGraph.setTextDatum(CC_DATUM);
     tempGraph.setTextWrap(false, false);
     tempGraph.setTextColor(tempGraph.color565(192, 192, 192), 0);
-    for (auto hgrid = 16; hgrid < HIGHEST_LEVEL_T; hgrid += 4)
+    for (auto gridLineHeight = 16; gridLineHeight < HIGHEST_LEVEL_T; gridLineHeight += 4)
     {
-        const auto ypos = mapf(hgrid, LOWEST_LEVEL_T, HIGHEST_LEVEL_T, tempGraph.height(), 0);
+        const auto ypos = mapf(gridLineHeight, LOWEST_LEVEL_T, HIGHEST_LEVEL_T, tempGraph.height(), 0);
         tempGraph.writeFastHLine(0, ypos, tempGraph.width(), tempGraph.color565(0, 0, 64));
-        tempGraph.drawNumber(hgrid, tempGraph.width() >> 1, ypos, &DejaVu12);
+        tempGraph.drawNumber(gridLineHeight, tempGraph.width() >> 1, ypos, &DejaVu12);
     }
     [[maybe_unused]] const auto pushTimeMS = millis();
     tempGraph.pushSprite(x, y);
