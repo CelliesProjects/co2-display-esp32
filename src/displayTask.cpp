@@ -528,7 +528,7 @@ static void updateWeatherForecast(const int32_t w, const int32_t h, const int32_
     weather.clear(BACKGROUND_COLOR);
 
     weather.setTextColor(0);
-    weather.drawCenterString("weather forecast by", weather.width() >> 1, 0, &DejaVu12);
+    weather.drawCenterString("weather forecast", weather.width() >> 1, 1, &DejaVu12);
     weather.drawCenterString("visualcrossing.com", weather.width() >> 1, weather.height() - 13, &DejaVu12);
 
     const iconData png = selectIcon(icon);
