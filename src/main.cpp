@@ -248,8 +248,9 @@ void setup()
     Serial.begin(115200);
     Serial.setDebugOutput(true);
 
-    forecasts.reserve(FORECASTS_MAX_ITEMS);
-    if (forecasts.capacity() != FORECASTS_MAX_ITEMS)
+    const auto REQUIRED_CAPACITY = std::max(FORECASTS_MAX_ITEMS, 2);
+    forecasts.reserve(REQUIRED_CAPACITY);
+    if (forecasts.capacity() != REQUIRED_CAPACITY)
     {
         log_e("could not allocate %i forecasts. halted!", FORECASTS_MAX_ITEMS);
         while (1)
