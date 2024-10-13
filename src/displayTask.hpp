@@ -27,7 +27,10 @@ extern void updateWeather();
 
 static LGFX display;
 
-static const auto BACKGROUND_COLOR = display.color565(245, 102, 10);
+static const auto BACKGROUND_COLOR = display.color565(0,0,0);
+static const auto GRAPH_BACKGROUND = display.color565(50, 50, 50);
+static const auto CLOCK_BACKGROUND = display.color565(245, 102, 10);
+static const auto WEATHER_BACKGROUND = display.color565(245, 102, 10);
 
 QueueHandle_t displayQueue = nullptr;
 

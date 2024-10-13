@@ -35,6 +35,7 @@ static void updateCo2History(const int32_t w, const int32_t h, const int32_t x, 
     {
         co2Graph.setColorDepth(lgfx::rgb565_2Byte);
         co2Graph.setPsram(true);
+        co2Graph.setBaseColor(GRAPH_BACKGROUND);
         if (!co2Graph.createSprite(w, h))
         {
             Serial.println("could not resize sprite. halting and catching fire");
@@ -109,7 +110,7 @@ static void updateCo2History(const int32_t w, const int32_t h, const int32_t x, 
     // grid
     co2Graph.setTextDatum(CC_DATUM);
     co2Graph.setTextWrap(false, false);
-    co2Graph.setTextColor(co2Graph.color565(192, 192, 192), 0);
+    co2Graph.setTextColor(co2Graph.color565(192, 192, 192), GRAPH_BACKGROUND);
     for (auto gridLineHeight = 500; gridLineHeight < HIGHEST_LEVEL_PPM; gridLineHeight += 500)
     {
         const auto ypos = mapf(gridLineHeight, LOWEST_LEVEL_PPM, HIGHEST_LEVEL_PPM, co2Graph.height(), 0);
@@ -164,6 +165,7 @@ static void updateHumidityHistory(const int32_t w, const int32_t h, const int32_
     if (humidityGraph.height() != h || humidityGraph.width() != w)
     {
         humidityGraph.setColorDepth(lgfx::rgb565_2Byte);
+        humidityGraph.setBaseColor(GRAPH_BACKGROUND);
         humidityGraph.setPsram(true);
         if (!humidityGraph.createSprite(w, h))
         {
@@ -177,8 +179,9 @@ static void updateHumidityHistory(const int32_t w, const int32_t h, const int32_
     humidityGraph.clear();
 
     const auto RED_MAX_H = 70;
-    const auto GREEN_MAX_H = 45;
-    const auto WHITE_MAX_H = 25;
+    const auto GREEN_MAX_H_HIGH = 60;
+    const auto GREEN_MAX_H_LOW = 40;
+    const auto WHITE_MAX_H = 30;
 
     const auto LOWEST_LEVEL_H = 15;
     const auto HIGHEST_LEVEL_H = 85;
@@ -196,7 +199,8 @@ static void updateHumidityHistory(const int32_t w, const int32_t h, const int32_
         };
 
         const int RED_MAX_Y = mapf(RED_MAX_H, HIGHEST_LEVEL_H, LOWEST_LEVEL_H, 0, h);
-        const int GREEN_MAX_Y = mapf(GREEN_MAX_H, HIGHEST_LEVEL_H, LOWEST_LEVEL_H, 0, h);
+        const int GREEN_MAX_Y_HIGH = mapf(GREEN_MAX_H_HIGH, HIGHEST_LEVEL_H, LOWEST_LEVEL_H, 0, h);
+        const int GREEN_MAX_Y_LOW = mapf(GREEN_MAX_H_LOW, HIGHEST_LEVEL_H, LOWEST_LEVEL_H, 0, h);
         const int WHITE_MAX_Y = mapf(WHITE_MAX_H, HIGHEST_LEVEL_H, LOWEST_LEVEL_H, 0, h);
 
         constexpr const auto WHITE = bar.color565(192, 192, 192);
@@ -204,8 +208,9 @@ static void updateHumidityHistory(const int32_t w, const int32_t h, const int32_
         constexpr const auto RED = bar.color565(255, 0, 0);
 
         bar.drawLine(0, 0, 0, RED_MAX_Y, RED);
-        bar.drawGradientLine(0, RED_MAX_Y, 0, GREEN_MAX_Y, RED, GREEN);
-        bar.drawGradientLine(0, GREEN_MAX_Y, 0, WHITE_MAX_Y, GREEN, WHITE);
+        bar.drawGradientLine(0, RED_MAX_Y, 0, GREEN_MAX_Y_HIGH, RED, GREEN);
+        bar.drawLine(0, GREEN_MAX_Y_HIGH, 0, GREEN_MAX_Y_LOW, GREEN);
+        bar.drawGradientLine(0, GREEN_MAX_Y_LOW, 0, WHITE_MAX_Y, GREEN, WHITE);
         bar.drawLine(0, WHITE_MAX_Y, 0, h, WHITE);
     }
 
@@ -238,7 +243,7 @@ static void updateHumidityHistory(const int32_t w, const int32_t h, const int32_
     // grid
     humidityGraph.setTextDatum(CC_DATUM);
     humidityGraph.setTextWrap(false, false);
-    humidityGraph.setTextColor(humidityGraph.color565(192, 192, 192), 0);
+    humidityGraph.setTextColor(humidityGraph.color565(192, 192, 192), GRAPH_BACKGROUND);
     for (auto gridLineHeight = 25; gridLineHeight < HIGHEST_LEVEL_H; gridLineHeight += 25)
     {
         const auto ypos = mapf(gridLineHeight, LOWEST_LEVEL_H, HIGHEST_LEVEL_H, humidityGraph.height(), 0);
@@ -296,6 +301,7 @@ static void updateTempHistory(const int32_t w, const int32_t h, const int32_t x,
     {
         tempGraph.setColorDepth(lgfx::rgb565_2Byte);
         tempGraph.setPsram(true);
+        tempGraph.setBaseColor(GRAPH_BACKGROUND);
         if (!tempGraph.createSprite(w, h))
         {
             Serial.println("could not resize sprite. halting and catching fire");
@@ -374,7 +380,7 @@ static void updateTempHistory(const int32_t w, const int32_t h, const int32_t x,
     // grid
     tempGraph.setTextDatum(CC_DATUM);
     tempGraph.setTextWrap(false, false);
-    tempGraph.setTextColor(tempGraph.color565(192, 192, 192), 0);
+    tempGraph.setTextColor(tempGraph.color565(192, 192, 192), GRAPH_BACKGROUND);
     for (auto gridLineHeight = 16; gridLineHeight < HIGHEST_LEVEL_T; gridLineHeight += 4)
     {
         const auto ypos = mapf(gridLineHeight, LOWEST_LEVEL_T, HIGHEST_LEVEL_T, tempGraph.height(), 0);
@@ -514,6 +520,7 @@ static void updateWeatherForecast(const int32_t w, const int32_t h, const int32_
     if (weather.height() != h || weather.width() != w)
     {
         weather.setColorDepth(lgfx::rgb565_2Byte);
+        weather.setBaseColor(WEATHER_BACKGROUND);
         weather.setPsram(true);
         if (!weather.createSprite(w, h))
         {
@@ -525,7 +532,7 @@ static void updateWeatherForecast(const int32_t w, const int32_t h, const int32_
         weather.setTextWrap(false, false);
     }
 
-    weather.clear(BACKGROUND_COLOR);
+    weather.clear();
 
     weather.setTextColor(0);
     weather.drawCenterString("weather forecast", weather.width() >> 1, 1, &DejaVu12);
@@ -607,6 +614,7 @@ static void updateClock()
     {
         constexpr const auto font = &Font7;
         static LGFX_Sprite clock(&display);
+        clock.setBaseColor(CLOCK_BACKGROUND);
 
         clock.setTextDatum(CC_DATUM);
         clock.setTextSize(2);
@@ -622,7 +630,7 @@ static void updateClock()
                 log_e("could not create sprite");
                 return;
             }
-            clock.clear(BACKGROUND_COLOR);
+            clock.clear();
         }
 
         clock.setTextColor(clock.color565(204, 122, 0));
@@ -657,7 +665,7 @@ void displayTask(void *parameter)
     {
         if (forecasts.size() && forecasts[0].time < time(NULL))
         {
-            updateWeatherForecast(170, 100, 300, 370, forecasts[0].icon, forecasts[0].temp);
+            updateWeatherForecast(170, 95, 300, 370, forecasts[0].icon, forecasts[0].temp);
             forecasts.erase(forecasts.begin());
             if (!forecasts.size())
                 updateWeather();
