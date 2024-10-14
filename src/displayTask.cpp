@@ -154,7 +154,6 @@ static void updateCo2Value(const int32_t w, const int32_t h, const int32_t x, co
     co2Value.setTextColor(2);
     co2Value.drawNumber(newValue, co2Value.width() >> 1, (co2Value.height() >> 1) + 4, &DejaVu40Modded);
 
-    co2Value.setTextColor(0);
     const auto xMiddle = co2Value.width() >> 1;
     co2Value.drawString("CO²", xMiddle, 24, &DejaVu24Modded);
     co2Value.drawString("ppm", xMiddle, co2Value.height() - 24, &DejaVu24Modded);
@@ -290,7 +289,6 @@ static void updateHumidityValue(const int32_t w, const int32_t h, const int32_t 
     humidityValue.drawNumber(newValue, humidityValue.width() >> 1, (humidityValue.height() >> 1) + 4, &DejaVu40Modded);
 
     const auto xMiddle = humidityValue.width() >> 1;
-    humidityValue.setTextColor(0);
     humidityValue.drawString("RH", xMiddle, 24, &DejaVu24Modded);
     humidityValue.drawString("%", xMiddle, humidityValue.height() - 24, &DejaVu24Modded);
 
@@ -456,7 +454,6 @@ static void updateTempValue(const int32_t w, const int32_t h, const int32_t x, c
     tempValue.drawString(integerStr, xMiddle - bigNumberOffset, yMiddle, &DejaVu40Modded);
     tempValue.drawString(fractionStr, xMiddle - smallNumberOffset, yMiddle - 4, &DejaVu24Modded);
 
-    tempValue.setTextColor(0);
     tempValue.drawString("T", xMiddle, 24, &DejaVu24Modded);
     tempValue.drawString("°C", xMiddle, tempValue.height() - 24, &DejaVu24Modded);
 
@@ -542,18 +539,18 @@ static void updateWeatherForecast(const int32_t w, const int32_t h, const int32_
 
     weather.setTextColor(0);
     weather.drawCenterString("weather forecast", weather.width() >> 1, 1, &DejaVu12);
-    weather.drawCenterString("visualcrossing.com", weather.width() >> 1, weather.height() - 13, &DejaVu12);
+    weather.drawCenterString("visualcrossing.com", weather.width() >> 1, weather.height() - 14, &DejaVu12);
 
     const iconData png = selectIcon(icon);
-    if (png.start && png.end && !weather.drawPng(png.start, png.end - png.start, 10, 15))
-        weather.drawString("PNG ERROR!", 10, 15, &DejaVu12);
+    if (png.start && png.end && !weather.drawPng(png.start, png.end - png.start, 30, 15))
+        weather.drawString("PNG ERROR!", 30, 15, &DejaVu12);
 
     weather.setTextColor(weather.color565(20, 20, 20));
 
     char buff[10];
     snprintf(buff, sizeof(buff), "%.0f°", temp);
     weather.setTextDatum(CC_DATUM);
-    weather.drawString(buff, 120, weather.height() >> 1, &DejaVu40Modded);
+    weather.drawString(buff, weather.width() - 55, (weather.height() >> 1) + 4, &DejaVu40Modded);
 
     weather.pushSprite(x, y);
 }
@@ -571,39 +568,39 @@ static void handleMessage(const displayMessage &msg)
         break;
     }
 
-    case displayMessage::CO2_LEVEL:
-    {
-        updateCo2Value(110, 110, 360, 10, msg.sizeVal);
-        break;
-    }
-
     case displayMessage::CO2_HISTORY:
     {
-        updateCo2History(350, 110, 10, 10);
+        updateCo2History(GRAPH_WIDTH, GRAPH_HEIGHT, 0, 0);
         break;
     }
 
-    case displayMessage::TEMPERATURE:
+    case displayMessage::CO2_LEVEL:
     {
-        updateTempValue(110, 110, 360, 250, msg.floatVal);
-        break;
-    }
-
-    case displayMessage::TEMPERATURE_HISTORY:
-    {
-        updateTempHistory(350, 110, 10, 250);
-        break;
-    }
-
-    case displayMessage::HUMIDITY:
-    {
-        updateHumidityValue(110, 110, 360, 130, msg.sizeVal);
+        updateCo2Value(VALUE_WIDTH, GRAPH_HEIGHT, GRAPH_WIDTH, 0, msg.sizeVal);
         break;
     }
 
     case displayMessage::HUMIDITY_HISTORY:
     {
-        updateHumidityHistory(350, 110, 10, 130);
+        updateHumidityHistory(GRAPH_WIDTH, GRAPH_HEIGHT, 0, GRAPH_HEIGHT + 5);
+        break;
+    }
+
+    case displayMessage::HUMIDITY:
+    {
+        updateHumidityValue(VALUE_WIDTH, GRAPH_HEIGHT, GRAPH_WIDTH, GRAPH_HEIGHT + 5, msg.sizeVal);
+        break;
+    }
+
+    case displayMessage::TEMPERATURE_HISTORY:
+    {
+        updateTempHistory(GRAPH_WIDTH, GRAPH_HEIGHT, 0, GRAPH_HEIGHT * 2 + 10);
+        break;
+    }
+
+    case displayMessage::TEMPERATURE:
+    {
+        updateTempValue(VALUE_WIDTH, GRAPH_HEIGHT, GRAPH_WIDTH, GRAPH_HEIGHT * 2 + 10, msg.floatVal);
         break;
     }
 
@@ -636,6 +633,8 @@ static void updateClock()
                 log_e("could not create sprite");
                 return;
             }
+            log_v("clock width %i", clock.width());
+            log_v("clock height %i", clock.height());
             clock.clear();
         }
 
@@ -647,7 +646,7 @@ static void updateClock()
         clock.setTextColor(display.color565(20, 12, 6));
         clock.drawString(timestr, xMiddle, yMiddle, font);
 
-        clock.pushSprite(10, 370);
+        clock.pushSprite(0, GRAPH_HEIGHT * 3 + 15);
 
         prevTime = timeinfo;
     }
@@ -671,7 +670,7 @@ void displayTask(void *parameter)
     {
         if (forecasts.size() && forecasts[0].time < time(NULL))
         {
-            updateWeatherForecast(170, 95, 300, 370, forecasts[0].icon, forecasts[0].temp);
+            updateWeatherForecast(display.width() - 285, 96, 285, GRAPH_HEIGHT * 3 + 15, forecasts[0].icon, forecasts[0].temp);
             forecasts.erase(forecasts.begin());
             if (!forecasts.size())
                 updateWeather();

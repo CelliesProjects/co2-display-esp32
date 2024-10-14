@@ -18,8 +18,9 @@
 static const auto BAR_WIDTH = 2; /* the bars inside a graph */
 static const auto GAP_WIDTH = 2; /* the gap between the bars */
 
-static const auto GRAPH_WIDTH = 370;
-static const auto GRAPH_HEIGHT = 110;
+static const auto GRAPH_WIDTH = 360;
+static const auto GRAPH_HEIGHT = 120;
+static const auto VALUE_WIDTH = 120;
 
 extern std::vector<forecast_t> forecasts;
 extern std::list<struct storageStruct> history;
