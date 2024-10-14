@@ -547,10 +547,13 @@ static void updateWeatherForecast(const int32_t w, const int32_t h, const int32_
 
     weather.setTextColor(weather.color565(20, 20, 20));
 
-    char buff[10];
-    snprintf(buff, sizeof(buff), "%.0f°", temp);
-    weather.setTextDatum(CC_DATUM);
-    weather.drawString(buff, weather.width() - 55, (weather.height() >> 1) + 4, &DejaVu40Modded);
+    if (!isnan(temp))
+    {
+        char buff[10];
+        snprintf(buff, sizeof(buff), "%.0f°", temp);
+        weather.setTextDatum(CC_DATUM);
+        weather.drawString(buff, weather.width() - 55, (weather.height() >> 1) + 4, &DejaVu40Modded);
+    }
 
     weather.pushSprite(x, y);
 }
@@ -609,47 +612,45 @@ static void handleMessage(const displayMessage &msg)
     }
 }
 
-static void updateClock()
+static void updateClock(const struct tm &timeinfo)
 {
-    struct tm timeinfo = {};
-    static struct tm prevTime = {};
-    if (getLocalTime(&timeinfo, 0) && prevTime.tm_sec != timeinfo.tm_sec)
+    constexpr const auto font = &Font7;
+    static LGFX_Sprite clock(&display);
+    clock.setPsram(true);
+    clock.setBaseColor(CLOCK_BACKGROUND);
+    clock.setTextDatum(CC_DATUM);
+    clock.setTextSize(2);
+
+    char timestr[16] = "88:88";
+    const auto width = clock.textWidth(timestr, font);
+    const auto height = clock.fontHeight(font);
+
+    if (clock.width() != width || clock.height() != height)
     {
-        constexpr const auto font = &Font7;
-        static LGFX_Sprite clock(&display);
-        clock.setBaseColor(CLOCK_BACKGROUND);
-
-        clock.setTextDatum(CC_DATUM);
-        clock.setTextSize(2);
-        char timestr[16] = "88:88";
-        const auto width = clock.textWidth(timestr, font);
-        const auto height = clock.fontHeight(font);
-
-        if (clock.width() != width || clock.height() != height)
+        const auto result = clock.createSprite(width, height);
+        if (!result)
         {
-            const auto result = clock.createSprite(width, height);
-            if (!result)
-            {
-                log_e("could not create sprite");
-                return;
-            }
-            log_v("clock width %i", clock.width());
-            log_v("clock height %i", clock.height());
-            clock.clear();
+            log_e("could not create sprite");
+            return;
         }
+        log_v("clock width %i", clock.width());
+        log_v("clock height %i", clock.height());
+        clock.clear();
+    }
 
-        clock.setTextColor(clock.color565(204, 122, 0));
-        const auto xMiddle = width >> 1;
-        const auto yMiddle = height >> 1;
-        clock.drawString(timestr, xMiddle, yMiddle, font);
+    clock.setTextColor(clock.color565(204, 122, 0));
+    const auto xMiddle = width >> 1;
+    const auto yMiddle = height >> 1;
+    clock.drawString(timestr, xMiddle, yMiddle, font);
+
+    if (timeinfo.tm_year != 0)
+    {
         strftime(timestr, sizeof(timestr), "%R", &timeinfo);
         clock.setTextColor(display.color565(20, 12, 6));
         clock.drawString(timestr, xMiddle, yMiddle, font);
-
-        clock.pushSprite(0, GRAPH_HEIGHT * 3 + 15);
-
-        prevTime = timeinfo;
     }
+
+    clock.pushSprite(0, GRAPH_HEIGHT * 3 + 15);
 }
 
 void displayTask(void *parameter)
@@ -661,8 +662,11 @@ void displayTask(void *parameter)
     display.setTextWrap(false, false);
     display.setTextScroll(false);
 
-    constexpr const auto TICK_RATE_HZ = 50;
+    const struct tm timeinfo = {};
+    updateClock(timeinfo);
+    updateWeatherForecast(display.width() - 285, 96, 285, GRAPH_HEIGHT * 3 + 15, "", NAN);
 
+    constexpr const auto TICK_RATE_HZ = 50;
     constexpr const TickType_t ticksToWait = pdTICKS_TO_MS(1000 / TICK_RATE_HZ);
     static TickType_t xLastWakeTime = xTaskGetTickCount();
 
@@ -682,6 +686,14 @@ void displayTask(void *parameter)
         if (xQueueReceive(displayQueue, &msg, 0) == pdTRUE)
             handleMessage(msg);
         else
-            updateClock();
+        {
+            struct tm timeinfo = {};
+            static struct tm prevTime = {};
+            if (getLocalTime(&timeinfo, 0) && prevTime.tm_sec != timeinfo.tm_sec)
+            {
+                updateClock(timeinfo);
+                prevTime = timeinfo;
+            }
+        }
     }
 }
