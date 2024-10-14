@@ -5,6 +5,12 @@ static float mapf(const float x, const float in_min, const float in_max, const f
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
+// making a screenshot:
+// https://lang-ship.com/blog/work/lovyangfx-8-screenshot/
+
+// really good resource for LovyanGFX
+// https://lang-ship.com/blog/files/LovyanGFX/
+
 // https://m5stack.lang-ship.com/howto/m5gfx/font/                                            <-------font list
 
 // https://lovyangfx.readthedocs.io/en/latest/02_using.html
