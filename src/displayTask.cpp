@@ -5,32 +5,6 @@ static float mapf(const float x, const float in_min, const float in_max, const f
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
-// making a screenshot:
-// https://lang-ship.com/blog/work/lovyangfx-8-screenshot/
-
-// really good resource for LovyanGFX
-// https://lang-ship.com/blog/files/LovyanGFX/
-
-// https://m5stack.lang-ship.com/howto/m5gfx/font/                                            <-------font list
-
-// https://lovyangfx.readthedocs.io/en/latest/02_using.html
-
-// https://m5stack.lang-ship.com/howto/m5gfx/font/
-
-// https://learn.adafruit.com/adafruit-gfx-graphics-library/using-fonts
-
-// https://learn.adafruit.com/adafruit-gfx-graphics-library?view=all#extended-characters-cp437-and-a-lurking-bug-3100368
-
-// https://oleddisplay.squix.ch/
-
-// https://github.com/Bodmer/TFT_eSPI/blob/master/examples/Smooth%20Fonts/FLASH_Array/Font_Demo_1_Array/Font_Demo_1_Array.ino
-
-// https://rop.nl/truetype2gfx/
-
-// https://github.com/robjen/GFX_fonts
-
-// https://tchapi.github.io/Adafruit-GFX-Font-Customiser/
-
 static void updateCo2History(const int32_t w, const int32_t h, const int32_t x, const int32_t y)
 {
     [[maybe_unused]] auto const START_MS = millis();
@@ -627,14 +601,11 @@ static void updateClock(const struct tm &timeinfo)
 
     if (clock.width() != width || clock.height() != height)
     {
-        const auto result = clock.createSprite(width, height);
-        if (!result)
+        if (!clock.createSprite(width, height))
         {
             log_e("could not create sprite");
             return;
         }
-        log_v("clock width %i", clock.width());
-        log_v("clock height %i", clock.height());
         clock.clear();
     }
 
@@ -677,7 +648,7 @@ void displayTask(void *parameter)
             updateWeatherForecast(display.width() - 285, 96, 285, GRAPH_HEIGHT * 3 + 15, forecasts[0].icon, forecasts[0].temp);
             forecasts.erase(forecasts.begin());
             if (!forecasts.size())
-                updateWeather();
+                startWeatherTask();
         }
 
         vTaskDelayUntil(&xLastWakeTime, ticksToWait);

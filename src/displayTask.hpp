@@ -24,7 +24,7 @@ static const auto VALUE_WIDTH = 120;
 
 extern std::vector<forecast_t> forecasts;
 extern std::list<struct storageStruct> history;
-extern void updateWeather();
+extern void startWeatherTask();
 
 static LGFX display;
 

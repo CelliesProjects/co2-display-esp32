@@ -33,7 +33,7 @@ static auto lastWebsocketEventMS = 0;
 std::vector<forecast_t> forecasts;
 std::list<struct storageStruct> history;
 
-void updateWeather()
+void startWeatherTask()
 {
     static TaskHandle_t weathertaskHandle = NULL;
     if (weathertaskHandle && (eTaskGetState(weathertaskHandle) == eRunning))
@@ -239,7 +239,7 @@ static void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
 
 static void ntpSynced(void *cb_arg)
 {
-    updateWeather();
+    startWeatherTask();
     sntp_set_time_sync_notification_cb(NULL);
 }
 
