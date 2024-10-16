@@ -5,32 +5,6 @@ static float mapf(const float x, const float in_min, const float in_max, const f
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
-// making a screenshot:
-// https://lang-ship.com/blog/work/lovyangfx-8-screenshot/
-
-// really good resource for LovyanGFX
-// https://lang-ship.com/blog/files/LovyanGFX/
-
-// https://m5stack.lang-ship.com/howto/m5gfx/font/                                            <-------font list
-
-// https://lovyangfx.readthedocs.io/en/latest/02_using.html
-
-// https://m5stack.lang-ship.com/howto/m5gfx/font/
-
-// https://learn.adafruit.com/adafruit-gfx-graphics-library/using-fonts
-
-// https://learn.adafruit.com/adafruit-gfx-graphics-library?view=all#extended-characters-cp437-and-a-lurking-bug-3100368
-
-// https://oleddisplay.squix.ch/
-
-// https://github.com/Bodmer/TFT_eSPI/blob/master/examples/Smooth%20Fonts/FLASH_Array/Font_Demo_1_Array/Font_Demo_1_Array.ino
-
-// https://rop.nl/truetype2gfx/
-
-// https://github.com/robjen/GFX_fonts
-
-// https://tchapi.github.io/Adafruit-GFX-Font-Customiser/
-
 static void updateCo2History(const int32_t w, const int32_t h, const int32_t x, const int32_t y)
 {
     [[maybe_unused]] auto const START_MS = millis();
@@ -154,7 +128,6 @@ static void updateCo2Value(const int32_t w, const int32_t h, const int32_t x, co
     co2Value.setTextColor(2);
     co2Value.drawNumber(newValue, co2Value.width() >> 1, (co2Value.height() >> 1) + 4, &DejaVu40Modded);
 
-    co2Value.setTextColor(0);
     const auto xMiddle = co2Value.width() >> 1;
     co2Value.drawString("CO²", xMiddle, 24, &DejaVu24Modded);
     co2Value.drawString("ppm", xMiddle, co2Value.height() - 24, &DejaVu24Modded);
@@ -290,7 +263,6 @@ static void updateHumidityValue(const int32_t w, const int32_t h, const int32_t 
     humidityValue.drawNumber(newValue, humidityValue.width() >> 1, (humidityValue.height() >> 1) + 4, &DejaVu40Modded);
 
     const auto xMiddle = humidityValue.width() >> 1;
-    humidityValue.setTextColor(0);
     humidityValue.drawString("RH", xMiddle, 24, &DejaVu24Modded);
     humidityValue.drawString("%", xMiddle, humidityValue.height() - 24, &DejaVu24Modded);
 
@@ -456,7 +428,6 @@ static void updateTempValue(const int32_t w, const int32_t h, const int32_t x, c
     tempValue.drawString(integerStr, xMiddle - bigNumberOffset, yMiddle, &DejaVu40Modded);
     tempValue.drawString(fractionStr, xMiddle - smallNumberOffset, yMiddle - 4, &DejaVu24Modded);
 
-    tempValue.setTextColor(0);
     tempValue.drawString("T", xMiddle, 24, &DejaVu24Modded);
     tempValue.drawString("°C", xMiddle, tempValue.height() - 24, &DejaVu24Modded);
 
@@ -542,18 +513,21 @@ static void updateWeatherForecast(const int32_t w, const int32_t h, const int32_
 
     weather.setTextColor(0);
     weather.drawCenterString("weather forecast", weather.width() >> 1, 1, &DejaVu12);
-    weather.drawCenterString("visualcrossing.com", weather.width() >> 1, weather.height() - 13, &DejaVu12);
+    weather.drawCenterString("visualcrossing.com", weather.width() >> 1, weather.height() - 14, &DejaVu12);
 
     const iconData png = selectIcon(icon);
-    if (png.start && png.end && !weather.drawPng(png.start, png.end - png.start, 10, 15))
-        weather.drawString("PNG ERROR!", 10, 15, &DejaVu12);
+    if (png.start && png.end && !weather.drawPng(png.start, png.end - png.start, 30, 15))
+        weather.drawString("PNG ERROR!", 30, 15, &DejaVu12);
 
     weather.setTextColor(weather.color565(20, 20, 20));
 
-    char buff[10];
-    snprintf(buff, sizeof(buff), "%.0f°", temp);
-    weather.setTextDatum(CC_DATUM);
-    weather.drawString(buff, 120, weather.height() >> 1, &DejaVu40Modded);
+    if (!isnan(temp))
+    {
+        char buff[10];
+        snprintf(buff, sizeof(buff), "%.0f°", temp);
+        weather.setTextDatum(CC_DATUM);
+        weather.drawString(buff, weather.width() - 55, (weather.height() >> 1) + 4, &DejaVu40Modded);
+    }
 
     weather.pushSprite(x, y);
 }
@@ -571,39 +545,39 @@ static void handleMessage(const displayMessage &msg)
         break;
     }
 
-    case displayMessage::CO2_LEVEL:
-    {
-        updateCo2Value(110, 110, 360, 10, msg.sizeVal);
-        break;
-    }
-
     case displayMessage::CO2_HISTORY:
     {
-        updateCo2History(350, 110, 10, 10);
+        updateCo2History(GRAPH_WIDTH, GRAPH_HEIGHT, 0, 0);
         break;
     }
 
-    case displayMessage::TEMPERATURE:
+    case displayMessage::CO2_LEVEL:
     {
-        updateTempValue(110, 110, 360, 250, msg.floatVal);
-        break;
-    }
-
-    case displayMessage::TEMPERATURE_HISTORY:
-    {
-        updateTempHistory(350, 110, 10, 250);
-        break;
-    }
-
-    case displayMessage::HUMIDITY:
-    {
-        updateHumidityValue(110, 110, 360, 130, msg.sizeVal);
+        updateCo2Value(VALUE_WIDTH, GRAPH_HEIGHT, GRAPH_WIDTH, 0, msg.sizeVal);
         break;
     }
 
     case displayMessage::HUMIDITY_HISTORY:
     {
-        updateHumidityHistory(350, 110, 10, 130);
+        updateHumidityHistory(GRAPH_WIDTH, GRAPH_HEIGHT, 0, GRAPH_HEIGHT + 5);
+        break;
+    }
+
+    case displayMessage::HUMIDITY:
+    {
+        updateHumidityValue(VALUE_WIDTH, GRAPH_HEIGHT, GRAPH_WIDTH, GRAPH_HEIGHT + 5, msg.sizeVal);
+        break;
+    }
+
+    case displayMessage::TEMPERATURE_HISTORY:
+    {
+        updateTempHistory(GRAPH_WIDTH, GRAPH_HEIGHT, 0, GRAPH_HEIGHT * 2 + 10);
+        break;
+    }
+
+    case displayMessage::TEMPERATURE:
+    {
+        updateTempValue(VALUE_WIDTH, GRAPH_HEIGHT, GRAPH_WIDTH, GRAPH_HEIGHT * 2 + 10, msg.floatVal);
         break;
     }
 
@@ -612,45 +586,42 @@ static void handleMessage(const displayMessage &msg)
     }
 }
 
-static void updateClock()
+static void updateClock(const struct tm &timeinfo)
 {
-    struct tm timeinfo = {};
-    static struct tm prevTime = {};
-    if (getLocalTime(&timeinfo, 0) && prevTime.tm_sec != timeinfo.tm_sec)
+    constexpr const auto font = &Font7;
+    static LGFX_Sprite clock(&display);
+    clock.setPsram(true);
+    clock.setBaseColor(CLOCK_BACKGROUND);
+    clock.setTextDatum(CC_DATUM);
+    clock.setTextSize(2);
+
+    char timestr[16] = "88:88";
+    const auto width = clock.textWidth(timestr, font);
+    const auto height = clock.fontHeight(font);
+
+    if (clock.width() != width || clock.height() != height)
     {
-        constexpr const auto font = &Font7;
-        static LGFX_Sprite clock(&display);
-        clock.setBaseColor(CLOCK_BACKGROUND);
-
-        clock.setTextDatum(CC_DATUM);
-        clock.setTextSize(2);
-        char timestr[16] = "88:88";
-        const auto width = clock.textWidth(timestr, font);
-        const auto height = clock.fontHeight(font);
-
-        if (clock.width() != width || clock.height() != height)
+        if (!clock.createSprite(width, height))
         {
-            const auto result = clock.createSprite(width, height);
-            if (!result)
-            {
-                log_e("could not create sprite");
-                return;
-            }
-            clock.clear();
+            log_e("could not create sprite");
+            return;
         }
+        clock.clear();
+    }
 
-        clock.setTextColor(clock.color565(204, 122, 0));
-        const auto xMiddle = width >> 1;
-        const auto yMiddle = height >> 1;
-        clock.drawString(timestr, xMiddle, yMiddle, font);
+    clock.setTextColor(clock.color565(204, 122, 0));
+    const auto xMiddle = width >> 1;
+    const auto yMiddle = height >> 1;
+    clock.drawString(timestr, xMiddle, yMiddle, font);
+
+    if (timeinfo.tm_year != 0)
+    {
         strftime(timestr, sizeof(timestr), "%R", &timeinfo);
         clock.setTextColor(display.color565(20, 12, 6));
         clock.drawString(timestr, xMiddle, yMiddle, font);
-
-        clock.pushSprite(10, 370);
-
-        prevTime = timeinfo;
     }
+
+    clock.pushSprite(0, GRAPH_HEIGHT * 3 + 15);
 }
 
 void displayTask(void *parameter)
@@ -662,8 +633,11 @@ void displayTask(void *parameter)
     display.setTextWrap(false, false);
     display.setTextScroll(false);
 
-    constexpr const auto TICK_RATE_HZ = 50;
+    const struct tm timeinfo = {};
+    updateClock(timeinfo);
+    updateWeatherForecast(display.width() - 285, 96, 285, GRAPH_HEIGHT * 3 + 15, "", NAN);
 
+    constexpr const auto TICK_RATE_HZ = 50;
     constexpr const TickType_t ticksToWait = pdTICKS_TO_MS(1000 / TICK_RATE_HZ);
     static TickType_t xLastWakeTime = xTaskGetTickCount();
 
@@ -671,10 +645,10 @@ void displayTask(void *parameter)
     {
         if (forecasts.size() && forecasts[0].time < time(NULL))
         {
-            updateWeatherForecast(170, 95, 300, 370, forecasts[0].icon, forecasts[0].temp);
+            updateWeatherForecast(display.width() - 285, 96, 285, GRAPH_HEIGHT * 3 + 15, forecasts[0].icon, forecasts[0].temp);
             forecasts.erase(forecasts.begin());
             if (!forecasts.size())
-                updateWeather();
+                startWeatherTask();
         }
 
         vTaskDelayUntil(&xLastWakeTime, ticksToWait);
@@ -683,6 +657,14 @@ void displayTask(void *parameter)
         if (xQueueReceive(displayQueue, &msg, 0) == pdTRUE)
             handleMessage(msg);
         else
-            updateClock();
+        {
+            struct tm timeinfo = {};
+            static struct tm prevTime = {};
+            if (getLocalTime(&timeinfo, 0) && prevTime.tm_sec != timeinfo.tm_sec)
+            {
+                updateClock(timeinfo);
+                prevTime = timeinfo;
+            }
+        }
     }
 }
