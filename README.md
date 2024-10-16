@@ -9,19 +9,15 @@ It reads data from a Senseair S8 CO2 sensor and an SHT31 temperature and humidit
 
 Sensors are on separate sensor board and are read over websocket.<br>
 This setup is chosen because the CO2 sensor uses over 300mA when reading and this made the tft screen flicker during the reading.<br>
-The sensor code is still private atm. but will be made public soon.
+You can find the sensor code at the [SensorHub repo](https://github.com/CelliesProjects/SensorHub).
 
 There is also weather forecast data shown which is retrieved from [visualcrossing.com](https://www.visualcrossing.com/).<br>
 You will need to setup an account with visualcrossing to be able to download weather data but registration and 1000 free API credits per day are included in the free accounts.<br>
 You can setup your free account [here](https://www.visualcrossing.com/weather-api).
 
-## Features
-
--  CO2 monitoring with the Senseair S8 sensor.
--  Temperature and humidity monitoring with the SHT31 sensor.
--  Configured with PlatformIO for easy development.
-
 ### Installation
+
+Assuming you already have the [SensorHub](https://github.com/CelliesProjects/SensorHub) and a [visualcrossing account](https://www.visualcrossing.com/weather-api) API key you can use these steps to install:
 
 1.  Clone this repository.
 ```bash
