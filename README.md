@@ -1,14 +1,14 @@
-# co2 display esp32
+# CO<sub>2</sub> display esp32
 
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/bdbc66cdcdfd46ab99144949714cc822)](https://app.codacy.com/gh/CelliesProjects/co2-display-esp32/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 
 ![SAM_3242](https://github.com/user-attachments/assets/76c282f7-baca-4862-9028-22992eba1542)
 
-This project is designed to display CO2 levels using a [Panel ESP32-4848S040](https://homeding.github.io/boards/esp32s3/panel-4848S040.htm).<br>
-It reads data from a Senseair S8 CO2 sensor and an SHT31 temperature and humidity sensor, displaying the real-time readings.
+This is a [PlatformIO](https://platformio.org/) project designed to display CO<sub>2</sub> levels using a [Panel ESP32-4848S040](https://homeding.github.io/boards/esp32s3/panel-4848S040.htm).<br>
+It reads data from a Senseair S8 CO<sub>2</sub> sensor and an SHT31 temperature and humidity sensor, displaying the real-time readings and the history of the last 2 hours.
 
-Sensors are on separate sensor board and are read over websocket.<br>
-This setup is chosen because the CO2 sensor uses over 300mA when reading and this made the tft screen flicker during the reading.<br>
+Sensors are on separate sensor board and are retrieved over websocket.<br>
+This setup is chosen because the SenseAir S8 CO<sub>2</sub> sensor uses up to 300mA when reading and this makes the tft screen flicker during reading.<br>
 You can find the sensor code at the [SensorHub repo](https://github.com/CelliesProjects/SensorHub).
 
 There is also weather forecast data shown which is retrieved from [visualcrossing.com](https://www.visualcrossing.com/).<br>
@@ -17,14 +17,14 @@ You can setup your free account [here](https://www.visualcrossing.com/weather-ap
 
 ### Installation
 
-Assuming you already have the [SensorHub](https://github.com/CelliesProjects/SensorHub) and a [visualcrossing account](https://www.visualcrossing.com/weather-api) API key you can use these steps to install:
+Assuming you already have the [SensorHub](https://github.com/CelliesProjects/SensorHub) running and a [visualcrossing account](https://www.visualcrossing.com/weather-api) API key you can use these steps to install:
 
 1.  Clone this repository.
 ```bash
 git clone https://github.com/CelliesProjects/co2-display-esp32.git
 ```
 
- 2.  Add a secrets.h file to the include folder with the following content:<br>
+ 2.  Open the extracted folder in PlatformIO and add a `secrets.h` file to the `include` folder with the following content:<br>
  ```c++
 #ifndef SECRETS
 #define SECRETS
@@ -38,7 +38,11 @@ const char *VISUAL_CROSSING_API_KEY = "your api key";
 
 #endif
 ```
-3. Build and upload the firmware to the ESP32 board using PlatformIO.
+3. Build and upload the firmware to the ESP32.
+
+### Done!
+
+If all went well the board will now search for the sensorhub and connect automagically.
 
 ## License
 This project is licensed under the MIT License.
