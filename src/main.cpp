@@ -2,12 +2,13 @@
 #include <SPI.h>
 #include <SD.h>
 #include <esp_sntp.h>
+#include <ESPmDNS.h>
 #include <list>
 #include <vector>
 
 #include <WebSocketsClient.h> /* https://github.com/Links2004/arduinoWebSockets */
 
-#define WEBSOCKET_SERVER "192.168.0.20"
+#define WEBSOCKET_MDNS_HOSTNAME "sensorhub"
 #define WEBSOCKET_PORT 80
 #define WEBSOCKET_URL "/sensors"
 #define WEBSOCKET_TIMEOUT 4000
@@ -27,6 +28,7 @@ extern void weatherDownloadTask(void *parameter);
 extern QueueHandle_t displayQueue;
 static TaskHandle_t displayTaskHandle = nullptr;
 
+static IPAddress websocketServerIP;
 static WebSocketsClient webSocket;
 static auto lastWebsocketEventMS = 0;
 
@@ -202,6 +204,14 @@ static void processPayload(char *payload)
     }
 }
 
+static void messageOnTFT(const char *str)
+{
+    displayMessage msg;
+    msg.type = displayMessage::SYSTEM_MESSAGE;
+    snprintf(msg.str, sizeof(msg.str), str);
+    xQueueSend(displayQueue, &msg, portMAX_DELAY);
+}
+
 static void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
 {
     switch (type)
@@ -210,7 +220,7 @@ static void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
         log_i("[WSc] Disconnected!");
         break;
     case WStype_CONNECTED:
-        log_i("[WSc] Connected to ws://%s:%i%s", WEBSOCKET_SERVER, WEBSOCKET_PORT, WEBSOCKET_URL);
+        log_i("[WSc] Connected to ws://%s:%i%s", websocketServerIP.toString().c_str(), WEBSOCKET_PORT, WEBSOCKET_URL);
         if (history.empty())
             webSocket.sendTXT("G:\n");
         lastWebsocketEventMS = millis();
@@ -252,13 +262,14 @@ void setup()
     forecasts.reserve(REQUIRED_CAPACITY);
     if (forecasts.capacity() != REQUIRED_CAPACITY)
     {
-        log_e("could not allocate %i forecasts. halted!", FORECASTS_MAX_ITEMS);
+        log_e("could not allocate %i forecasts. System halted", FORECASTS_MAX_ITEMS);
         while (1)
             delay(100);
     }
 
-    log_i("connecting to %s\n", WIFI_SSID);
+    log_i("connecting to %s", WIFI_SSID);
 
+    WiFi.setSleep(false);
     WiFi.begin(WIFI_SSID, WIFI_PSK);
 
     // mount sd card
@@ -285,7 +296,7 @@ void setup()
 
     if (taskResult != pdPASS)
     {
-        log_e("FATAL error! Could not create playerTask. System HALTED!");
+        log_e("FATAL error! Could not create display task. System HALTED!");
         while (1)
             delay(100);
     }
@@ -296,10 +307,40 @@ void setup()
 
     log_i("connected to %s", WIFI_SSID);
 
+    messageOnTFT("Searching the sensors...");
+
+    if (mdns_init() != ESP_OK)
+    {
+        messageOnTFT("mDNS ERROR. System halted");
+        while (1)
+            delay(100);
+    }
+
+    int ndx = MDNS.queryService("http", "tcp");
+
+    log_i("found %i mDNS servers", ndx);
+
+    while (--ndx != -1)
+    {
+        if (MDNS.hostname(ndx) == WEBSOCKET_MDNS_HOSTNAME)
+            break;
+    }
+
+    if (ndx == -1)
+    {
+        messageOnTFT("No sensors. System halted");
+        while (1)
+            delay(100);
+    }
+
+    log_i("sensorhub found at IP %s", MDNS.IP(ndx).toString().c_str());
+
+    websocketServerIP = MDNS.IP(ndx);
+
     sntp_set_time_sync_notification_cb((sntp_sync_time_cb_t)ntpSynced);
     configTzTime(TIMEZONE, NTP_POOL);
 
-    webSocket.begin(WEBSOCKET_SERVER, WEBSOCKET_PORT, WEBSOCKET_URL);
+    webSocket.begin(websocketServerIP, WEBSOCKET_PORT, WEBSOCKET_URL);
     webSocket.onEvent(webSocketEvent);
     webSocket.setReconnectInterval(600);
 }
