@@ -538,10 +538,18 @@ static void handleMessage(const displayMessage &msg)
     {
     case displayMessage::SYSTEM_MESSAGE:
     {
-        display.setCursor(0, 0);
-        display.setTextColor(TFT_BLACK, TFT_WHITE);
-        display.setTextSize(2 /* x scale */, 5 /* y scale */);
-        display.println(msg.str);
+        static LGFX_Sprite sysMess(&display);
+        if (sysMess.width() == 0 || sysMess.height() == 0)
+        {
+            if (!sysMess.createSprite(display.width(), GRAPH_HEIGHT))
+            {
+                log_e("could not create sprite");
+                return;
+            }
+        }
+        sysMess.setTextColor(TFT_WHITE, TFT_BLACK);
+        sysMess.drawCenterString(msg.str, display.width() >> 1, 40, &DejaVu24Modded);
+        sysMess.pushSprite(0, GRAPH_HEIGHT + 5);
         break;
     }
 
