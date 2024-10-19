@@ -227,7 +227,7 @@ static void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
         lastWebsocketEventMS = millis();
         break;
     case WStype_TEXT:
-        processPayload((char *)payload);
+        processPayload(reinterpret_cast<char *>(payload));
         lastWebsocketEventMS = millis();
         break;
     case WStype_BIN:
