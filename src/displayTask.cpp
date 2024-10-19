@@ -5,6 +5,34 @@ static float mapf(const float x, const float in_min, const float in_max, const f
     return (x - in_min) * (out_max - out_min) / (in_max - in_min) + out_min;
 }
 
+static void showSystemMessage(char *str)
+{
+    static LGFX_Sprite sysMess(&display);
+
+    if (sysMess.width() == 0 || sysMess.height() == 0)
+    {
+        sysMess.setColorDepth(lgfx::palette_2bit);
+        if (!sysMess.createSprite(display.width(), GRAPH_HEIGHT))
+        {
+            log_e("could not create sprite");
+            return;
+        }
+        sysMess.setPaletteColor(1, 200, 200, 200);
+        sysMess.setTextColor(1);
+    }
+    sysMess.clear();
+
+    auto cnt = 0;
+    char *pch = strtok(str, "\n");
+    while (pch)
+    {
+        sysMess.drawCenterString(pch, display.width() >> 1, cnt++ * DejaVu24Modded.yAdvance, &DejaVu24Modded);
+        pch = strtok(NULL, "\n");
+    }
+
+    sysMess.pushSprite(0, GRAPH_HEIGHT + 5);
+}
+
 static void updateCo2History(const int32_t w, const int32_t h, const int32_t x, const int32_t y)
 {
     [[maybe_unused]] auto const START_MS = millis();
@@ -532,24 +560,13 @@ static void updateWeatherForecast(const int32_t w, const int32_t h, const int32_
     weather.pushSprite(x, y);
 }
 
-static void handleMessage(const displayMessage &msg)
+static void handleMessage(displayMessage &msg)
 {
     switch (msg.type)
     {
     case displayMessage::SYSTEM_MESSAGE:
     {
-        static LGFX_Sprite sysMess(&display);
-        if (sysMess.width() == 0 || sysMess.height() == 0)
-        {
-            if (!sysMess.createSprite(display.width(), GRAPH_HEIGHT))
-            {
-                log_e("could not create sprite");
-                return;
-            }
-        }
-        sysMess.setTextColor(TFT_WHITE, TFT_BLACK);
-        sysMess.drawCenterString(msg.str, display.width() >> 1, 40, &DejaVu24Modded);
-        sysMess.pushSprite(0, GRAPH_HEIGHT + 5);
+        showSystemMessage(msg.str);
         break;
     }
 
@@ -630,6 +647,11 @@ static void updateClock(const struct tm &timeinfo)
     }
 
     clock.pushSprite(0, GRAPH_HEIGHT * 3 + 15);
+}
+
+bool TFTtouched(int32_t &x, int32_t &y)
+{
+    return display.getTouch(&x, &y) ? true : false;
 }
 
 void displayTask(void *parameter)

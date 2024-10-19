@@ -35,8 +35,6 @@ static const auto WEATHER_BACKGROUND = display.color565(245, 102, 10);
 
 QueueHandle_t displayQueue = nullptr;
 
-void displayTask(void *parameter);
-
 /* weather icons from https://github.com/visualcrossing/WeatherIcons/tree/main/PNG/1st%20Set%20-%20Color */
 
 extern const uint8_t clear_day_png_start[] asm("_binary_src_weather_icons_clear_day_png_start");

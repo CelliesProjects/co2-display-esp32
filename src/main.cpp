@@ -23,6 +23,7 @@
 #include "displayMessageStruct.hpp"
 
 extern void displayTask(void *parameter);
+extern bool TFTtouched(int32_t &x, int32_t &y);
 extern void weatherDownloadTask(void *parameter);
 
 extern QueueHandle_t displayQueue;
@@ -253,6 +254,21 @@ static void ntpSynced(void *cb_arg)
     sntp_set_time_sync_notification_cb(NULL);
 }
 
+static bool getSensorhubIP(IPAddress &hubIP)
+{
+    int ndx = MDNS.queryService("http", "tcp");
+    while (--ndx != -1)
+    {
+        if (MDNS.hostname(ndx) == WEBSOCKET_MDNS_HOSTNAME)
+            break;
+    }
+    if (ndx == -1)
+        return false;
+
+    hubIP = MDNS.IP(ndx);
+    return true;
+}
+
 void setup()
 {
     Serial.begin(115200);
@@ -300,6 +316,9 @@ void setup()
         while (1)
             delay(100);
     }
+
+    messageOnTFT("Looking for WiFi...\nPlease wait");
+
     log_i("waiting for WiFi network %s to connect", WIFI_SSID);
 
     while (!WiFi.isConnected())
@@ -307,38 +326,26 @@ void setup()
 
     log_i("connected to %s", WIFI_SSID);
 
-    messageOnTFT("Searching the sensors...");
-
     if (mdns_init() != ESP_OK)
     {
-        messageOnTFT("mDNS ERROR. System halted");
+        messageOnTFT("mDNS init ERROR. System halted");
         while (1)
             delay(100);
     }
-
-    int ndx = MDNS.queryService("http", "tcp");
-
-    log_i("found %i mDNS servers", ndx);
-
-    while (--ndx != -1)
-    {
-        if (MDNS.hostname(ndx) == WEBSOCKET_MDNS_HOSTNAME)
-            break;
-    }
-
-    if (ndx == -1)
-    {
-        messageOnTFT("No sensors. System halted");
-        while (1)
-            delay(100);
-    }
-
-    log_i("sensorhub found at IP %s", MDNS.IP(ndx).toString().c_str());
-
-    websocketServerIP = MDNS.IP(ndx);
 
     sntp_set_time_sync_notification_cb((sntp_sync_time_cb_t)ntpSynced);
     configTzTime(TIMEZONE, NTP_POOL);
+
+    const char searchMess[] = {"Searching the sensors..."};
+    messageOnTFT(searchMess);
+    while (!getSensorhubIP(websocketServerIP))
+    {
+        messageOnTFT("No sensors found\nCheck if the sensors are running\nTap the screen to search again");
+        int32_t x, y;
+        while (!TFTtouched(x, y))
+            vTaskDelay(pdTICKS_TO_MS(10));
+        messageOnTFT(searchMess);
+    }
 
     webSocket.begin(websocketServerIP, WEBSOCKET_PORT, WEBSOCKET_URL);
     webSocket.onEvent(webSocketEvent);
@@ -346,7 +353,6 @@ void setup()
 }
 
 constexpr const auto TICK_RATE_HZ = 50;
-
 constexpr const TickType_t ticksToWait = pdTICKS_TO_MS(1000 / TICK_RATE_HZ);
 static TickType_t xLastWakeTime = xTaskGetTickCount();
 
