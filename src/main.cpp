@@ -4,7 +4,6 @@
 #include <esp_sntp.h>
 #include <ESPmDNS.h>
 #include <list>
-#include <vector>
 
 #include <WebSocketsClient.h> /* https://github.com/Links2004/arduinoWebSockets */
 
@@ -15,7 +14,6 @@
 
 #define HISTORY_MAX_ITEMS 180
 #define DISPLAY_QUEUE_MAX_ITEMS 8
-#define FORECASTS_MAX_ITEMS 6
 
 #include "secrets.h" /* untracked file containing wifi credentials */
 #include "storageStruct.hpp"
@@ -33,7 +31,6 @@ static IPAddress websocketServerIP;
 static WebSocketsClient webSocket;
 static auto lastWebsocketEventMS = 0;
 
-std::vector<forecast_t> forecasts;
 std::list<struct storageStruct> history;
 
 void startWeatherTask()
@@ -273,15 +270,6 @@ void setup()
 {
     Serial.begin(115200);
     Serial.setDebugOutput(true);
-
-    const auto REQUIRED_CAPACITY = std::max(FORECASTS_MAX_ITEMS, 2);
-    forecasts.reserve(REQUIRED_CAPACITY);
-    if (forecasts.capacity() != REQUIRED_CAPACITY)
-    {
-        log_e("could not allocate %i forecasts. System halted", FORECASTS_MAX_ITEMS);
-        while (1)
-            delay(100);
-    }
 
     log_i("connecting to %s", WIFI_SSID);
 
