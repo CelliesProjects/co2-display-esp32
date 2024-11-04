@@ -80,7 +80,7 @@ void weatherDownloadTask(void *parameter)
 
         http.end();
 
-        log_i("query cost %i", int32_t(doc[queryCost]));
+        log_d("query cost %i", int32_t(doc[queryCost]));
 
         if (doc[currentConditions][icon].isNull() ||
             doc[currentConditions][temp].isNull())
