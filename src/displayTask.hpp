@@ -22,7 +22,6 @@ static const auto GRAPH_WIDTH = 360;
 static const auto GRAPH_HEIGHT = 120;
 static const auto VALUE_WIDTH = 120;
 
-extern std::vector<forecast_t> forecasts;
 extern std::list<struct storageStruct> history;
 extern void startWeatherTask();
 

@@ -5,16 +5,13 @@
 #include <ArduinoJson.h>
 
 #include "displayMessageStruct.hpp"
-#include "forecast_t.hpp"
 
 extern const char *VISUAL_CROSSING_API_KEY;
 extern const char *VISUAL_CROSSING_CITY;
 extern const char *VISUAL_CROSSING_COUNTRY;
 
+extern void showForecast(const char *icon, const float temp);
+
 extern QueueHandle_t displayQueue;
-
-extern std::vector<forecast_t> forecasts;
-
-void weatherDownloadTask(void *parameter);
 
 #endif

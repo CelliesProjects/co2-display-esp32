@@ -4,7 +4,6 @@
 #include <esp_sntp.h>
 #include <ESPmDNS.h>
 #include <list>
-#include <vector>
 
 #include <WebSocketsClient.h> /* https://github.com/Links2004/arduinoWebSockets */
 
@@ -15,7 +14,6 @@
 
 #define HISTORY_MAX_ITEMS 180
 #define DISPLAY_QUEUE_MAX_ITEMS 8
-#define FORECASTS_MAX_ITEMS 6
 
 #include "secrets.h" /* untracked file containing wifi credentials */
 #include "storageStruct.hpp"
@@ -33,7 +31,6 @@ static IPAddress websocketServerIP;
 static WebSocketsClient webSocket;
 static auto lastWebsocketEventMS = 0;
 
-std::vector<forecast_t> forecasts;
 std::list<struct storageStruct> history;
 
 void startWeatherTask()
@@ -48,7 +45,7 @@ void startWeatherTask()
                                         NULL,
                                         4096 * 2,
                                         NULL,
-                                        tskIDLE_PRIORITY,
+                                        tskIDLE_PRIORITY + 2,
                                         &weathertaskHandle);
     if (taskResult != pdPASS)
         log_e("Could not create weatherTask");
@@ -248,40 +245,27 @@ static void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
     }
 }
 
-static void ntpSynced(void *cb_arg)
-{
-    startWeatherTask();
-    sntp_set_time_sync_notification_cb(NULL);
-}
-
-static bool getSensorhubIP(IPAddress &hubIP)
+static bool findSensorhubIP(IPAddress &hubIP)
 {
     int ndx = MDNS.queryService("http", "tcp");
-    while (--ndx != -1)
-    {
-        if (MDNS.hostname(ndx) == WEBSOCKET_MDNS_HOSTNAME)
-            break;
-    }
-    if (ndx == -1)
+    if (ndx == 0)
         return false;
 
-    hubIP = MDNS.IP(ndx);
-    return true;
+    for (int i = ndx - 1; i >= 0; --i)
+    {
+        if (MDNS.hostname(i) == WEBSOCKET_MDNS_HOSTNAME)
+        {
+            hubIP = MDNS.IP(i);
+            return true;
+        }
+    }
+    return false;
 }
 
 void setup()
 {
     Serial.begin(115200);
     Serial.setDebugOutput(true);
-
-    const auto REQUIRED_CAPACITY = std::max(FORECASTS_MAX_ITEMS, 2);
-    forecasts.reserve(REQUIRED_CAPACITY);
-    if (forecasts.capacity() != REQUIRED_CAPACITY)
-    {
-        log_e("could not allocate %i forecasts. System halted", FORECASTS_MAX_ITEMS);
-        while (1)
-            delay(100);
-    }
 
     log_i("connecting to %s", WIFI_SSID);
 
@@ -307,7 +291,7 @@ void setup()
                                   NULL,
                                   4096,
                                   NULL,
-                                  tskIDLE_PRIORITY,
+                                  tskIDLE_PRIORITY + 1,
                                   &displayTaskHandle);
 
     if (taskResult != pdPASS)
@@ -332,13 +316,13 @@ void setup()
         while (1)
             delay(100);
     }
-
-    sntp_set_time_sync_notification_cb((sntp_sync_time_cb_t)ntpSynced);
     configTzTime(TIMEZONE, NTP_POOL);
 
-    const char searchMess[] = {"Searching the sensors..."};
+    startWeatherTask();
+
+    constexpr static char searchMess[] = {"Searching the sensors..."};
     messageOnTFT(searchMess);
-    while (!getSensorhubIP(websocketServerIP))
+    while (!findSensorhubIP(websocketServerIP))
     {
         messageOnTFT("No sensors found\nCheck if the sensors are running\nTap the screen to search again");
         int32_t x, y;

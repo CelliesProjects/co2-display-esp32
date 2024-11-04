@@ -560,6 +560,11 @@ static void updateWeatherForecast(const int32_t w, const int32_t h, const int32_
     weather.pushSprite(x, y);
 }
 
+void showForecast(const char *icon, const float temp)
+{
+    updateWeatherForecast(display.width() - 285, 96, 285, GRAPH_HEIGHT * 3 + 15, icon, temp);
+}
+
 static void handleMessage(displayMessage &msg)
 {
     switch (msg.type)
@@ -673,14 +678,6 @@ void displayTask(void *parameter)
 
     while (1)
     {
-        if (forecasts.size() && forecasts[0].time < time(NULL))
-        {
-            updateWeatherForecast(display.width() - 285, 96, 285, GRAPH_HEIGHT * 3 + 15, forecasts[0].icon, forecasts[0].temp);
-            forecasts.erase(forecasts.begin());
-            if (!forecasts.size())
-                startWeatherTask();
-        }
-
         vTaskDelayUntil(&xLastWakeTime, ticksToWait);
 
         static struct displayMessage msg;
