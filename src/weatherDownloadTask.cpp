@@ -23,7 +23,7 @@ void weatherDownloadTask(void *parameter)
         vTaskDelete(NULL);
     }
 
-    log_i("request url: %s", url);
+    log_d("request url: %s", url);
 
     constexpr static const char *queryCost = "queryCost";
     constexpr static const char *currentConditions = "currentConditions";
