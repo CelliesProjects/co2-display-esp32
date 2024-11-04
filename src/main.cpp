@@ -45,7 +45,7 @@ void startWeatherTask()
                                         NULL,
                                         4096 * 2,
                                         NULL,
-                                        tskIDLE_PRIORITY,
+                                        tskIDLE_PRIORITY + 2,
                                         &weathertaskHandle);
     if (taskResult != pdPASS)
         log_e("Could not create weatherTask");
@@ -295,7 +295,7 @@ void setup()
                                   NULL,
                                   4096,
                                   NULL,
-                                  tskIDLE_PRIORITY,
+                                  tskIDLE_PRIORITY + 1,
                                   &displayTaskHandle);
 
     if (taskResult != pdPASS)
@@ -324,7 +324,7 @@ void setup()
     sntp_set_time_sync_notification_cb((sntp_sync_time_cb_t)ntpSynced);
     configTzTime(TIMEZONE, NTP_POOL);
 
-    const char searchMess[] = {"Searching the sensors..."};
+    constexpr static char searchMess[] = {"Searching the sensors..."};
     messageOnTFT(searchMess);
     while (!getSensorhubIP(websocketServerIP))
     {
