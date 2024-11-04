@@ -14,6 +14,4 @@ extern void showForecast(const char *icon, const float temp);
 
 extern QueueHandle_t displayQueue;
 
-void weatherDownloadTask(void *parameter);
-
 #endif
