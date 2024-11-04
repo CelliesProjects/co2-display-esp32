@@ -245,25 +245,21 @@ static void webSocketEvent(WStype_t type, uint8_t *payload, size_t length)
     }
 }
 
-static void ntpSynced(void *cb_arg)
-{
-    startWeatherTask();
-    sntp_set_time_sync_notification_cb(NULL);
-}
-
-static bool getSensorhubIP(IPAddress &hubIP)
+static bool findSensorhubIP(IPAddress &hubIP)
 {
     int ndx = MDNS.queryService("http", "tcp");
-    while (--ndx != -1)
-    {
-        if (MDNS.hostname(ndx) == WEBSOCKET_MDNS_HOSTNAME)
-            break;
-    }
-    if (ndx == -1)
+    if (ndx == 0)
         return false;
 
-    hubIP = MDNS.IP(ndx);
-    return true;
+    for (int i = ndx - 1; i >= 0; --i)
+    {
+        if (MDNS.hostname(i) == WEBSOCKET_MDNS_HOSTNAME)
+        {
+            hubIP = MDNS.IP(i);
+            return true;
+        }
+    }
+    return false;
 }
 
 void setup()
@@ -320,13 +316,13 @@ void setup()
         while (1)
             delay(100);
     }
-
-    sntp_set_time_sync_notification_cb((sntp_sync_time_cb_t)ntpSynced);
     configTzTime(TIMEZONE, NTP_POOL);
+
+    startWeatherTask();
 
     constexpr static char searchMess[] = {"Searching the sensors..."};
     messageOnTFT(searchMess);
-    while (!getSensorhubIP(websocketServerIP))
+    while (!findSensorhubIP(websocketServerIP))
     {
         messageOnTFT("No sensors found\nCheck if the sensors are running\nTap the screen to search again");
         int32_t x, y;
