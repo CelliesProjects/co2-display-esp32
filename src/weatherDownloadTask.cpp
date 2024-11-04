@@ -11,7 +11,7 @@ void weatherDownloadTask(void *parameter)
     static char url[512];
     const int urlLength = snprintf(url, sizeof(url),
                                    "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/%s,%%20%s/"
-                                   "next24hours?unitGroup=metric&elements=datetimeEpoch,temp,icon&include=current&key=%s"
+                                   "next24hours?unitGroup=metric&elements=temp,icon&include=current&key=%s"
                                    "&options=nonulls&contentType=json",
                                    VISUAL_CROSSING_CITY,
                                    VISUAL_CROSSING_COUNTRY,
