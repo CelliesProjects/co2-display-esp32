@@ -2,29 +2,40 @@
 
 void weatherDownloadTask(void *parameter)
 {
-    constexpr const int TASK_DELAY_MS = 60 * 30 * 1000;
-
     if (!WiFi.isConnected() || !VISUAL_CROSSING_CITY || !VISUAL_CROSSING_COUNTRY || !VISUAL_CROSSING_API_KEY)
     {
         log_e("can not start weatherTask because of reasons");
         vTaskDelete(NULL);
     }
 
+    static char url[512];
+    const int urlLength = snprintf(url, sizeof(url),
+                                   "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/%s,%%20%s/"
+                                   "next24hours?unitGroup=metric&elements=datetimeEpoch,temp,icon&include=current&key=%s"
+                                   "&options=nonulls&contentType=json",
+                                   VISUAL_CROSSING_CITY,
+                                   VISUAL_CROSSING_COUNTRY,
+                                   VISUAL_CROSSING_API_KEY);
+
+    if (urlLength < 0 || urlLength >= sizeof(url))
+    {
+        log_e("URL length exceeds buffer size, unable to proceed");
+        vTaskDelete(NULL);
+    }
+
+    log_i("request url: %s", url);
+
+    constexpr static const char *queryCost = "queryCost";
+    constexpr static const char *currentConditions = "currentConditions";
+    constexpr static const char *icon = "icon";
+    constexpr static const char *temp = "temp";
+
     static WiFiClientSecure client;
     static HTTPClient http;
 
     client.setInsecure();
 
-    static char url[512];
-    snprintf(url, sizeof(url),
-             "https://weather.visualcrossing.com/VisualCrossingWebServices/rest/services/timeline/%s,%%20%s/"
-             "next24hours?unitGroup=metric&elements=datetimeEpoch,temp,icon&include=current&key=%s"
-             "&options=nonulls&contentType=json",
-             VISUAL_CROSSING_CITY,
-             VISUAL_CROSSING_COUNTRY,
-             VISUAL_CROSSING_API_KEY);
-
-    log_i("request url: %s", url);
+    constexpr const int TASK_DELAY_MS = 60 * 30 * 1000;
 
     while (1)
     {
@@ -51,11 +62,6 @@ void weatherDownloadTask(void *parameter)
             vTaskDelay(pdTICKS_TO_MS(TASK_DELAY_MS));
             continue;
         }
-
-        constexpr static const char *queryCost = "queryCost";
-        constexpr static const char *currentConditions = "currentConditions";
-        constexpr static const char *icon = "icon";
-        constexpr static const char *temp = "temp";
 
         // the json filter: it contains "true" for each value we want to keep
         JsonDocument filter;
