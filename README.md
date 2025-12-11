@@ -2,10 +2,10 @@
 
 [![Codacy Badge](https://app.codacy.com/project/badge/Grade/bdbc66cdcdfd46ab99144949714cc822)](https://app.codacy.com/gh/CelliesProjects/co2-display-esp32/dashboard?utm_source=gh&utm_medium=referral&utm_content=&utm_campaign=Badge_grade)
 
-![SAM_3242](https://github.com/user-attachments/assets/76c282f7-baca-4862-9028-22992eba1542)
-
 This is a [PlatformIO](https://platformio.org/) project designed to display CO<sub>2</sub> levels using a [Panel ESP32-4848S040](https://homeding.github.io/boards/esp32s3/panel-4848S040.htm).<br>
-It reads data from a Senseair S8 CO<sub>2</sub> sensor and an SHT31 temperature and humidity sensor, displaying the real-time readings and the history of the last 2 hours.
+It reads data from a Senseair S8 CO<sub>2</sub> sensor and an SHT31 temperature and humidity sensor, displaying the real-time readings and the history of the last hour.
+
+![screenshot.bmp](https://github.com/user-attachments/files/24103710/screenshot.bmp)
 
 Sensors are on separate sensor board and are retrieved over websocket.<br>
 This setup is chosen because the SenseAir S8 CO<sub>2</sub> sensor uses up to 300mA when reading and this makes the tft screen flicker during reading.<br>
