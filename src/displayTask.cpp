@@ -682,6 +682,53 @@ bool TFTtouched(int32_t &x, int32_t &y)
     return display.getTouch(&x, &y) ? true : false;
 }
 
+void takeScreenshot()
+{
+    ScreenShot sShot;
+    String error;
+    log_i("Saving screenshot to SD");
+    bool success = sShot.saveBMP("/screenshot.bmp", display, SD, error);
+    log_i("Screenshot: %s", success ? "saved" : error.c_str());
+}
+
+void handleTouch()
+{
+    static bool touchActive = false;
+    static bool screenshotTaken = false;
+    static uint32_t touchStartMs = 0;
+
+    int32_t tx, ty;
+    const bool touching = display.getTouch(&tx, &ty);
+
+    constexpr uint32_t HOLD_TIME_MS = 1200;
+
+    if (!touching)
+    {
+        touchActive = false;
+        screenshotTaken = false;
+        return;
+    }
+
+    if (tx < 440 || ty > 40)
+    {
+        touchActive = false;
+        screenshotTaken = false;
+        return;
+    }
+
+    if (!touchActive)
+    {
+        touchActive = true;
+        screenshotTaken = false;
+        touchStartMs = millis();
+    }
+    else if (!screenshotTaken && (millis() - touchStartMs >= HOLD_TIME_MS))
+    {
+        takeScreenshot();
+        screenshotTaken = true;
+    }
+}
+
 void displayTask(void *parameter)
 {
     display.setColorDepth(lgfx::rgb565_2Byte);
@@ -716,5 +763,6 @@ void displayTask(void *parameter)
                 prevTime = timeinfo;
             }
         }
+        handleTouch();
     }
 }
