@@ -35,42 +35,19 @@ static void showSystemMessage(char *str)
 
 void showTimeLines(LGFX_Sprite &sprite, bool showString = false)
 {
-    constexpr uint32_t distance = 30 * (BAR_WIDTH + GAP_WIDTH);
-    constexpr uint32_t doubleDistance = distance * 2;
+    constexpr uint32_t dist30 = 30 * (BAR_WIDTH + GAP_WIDTH);
+    constexpr uint32_t dist60 = dist30 * 2;
     constexpr uint16_t lineColor = lgfx::color565(164, 164, 164);
 
-    sprite.drawFastVLine(sprite.width() - distance, 0, sprite.height(), lineColor);
-    sprite.drawFastVLine(sprite.width() - doubleDistance, 0, sprite.height(), lineColor);
+    sprite.drawFastVLine(sprite.width() - dist30, 0, sprite.height(), lineColor);
+    sprite.drawFastVLine(sprite.width() - dist60, 0, sprite.height(), lineColor);
 
-    struct tm timeinfo{};
-    if (showString && getLocalTime(&timeinfo, 0))
-    {
-        time_t now = time(nullptr);
-        time_t t30 = now - 30 * 60; // 30 minutes ago
-        time_t t60 = now - 60 * 60; // 1 hour ago
+    if (!showString)
+        return;
 
-        // Sync with the time on the display
-        t30++;
-        t60++;
-
-        struct tm tm30;
-        struct tm tm60;
-        localtime_r(&t30, &tm30);
-        localtime_r(&t60, &tm60);
-
-        // Prepare buffers
-        char buf30[6]; // "HH:MM"
-        char buf60[6];
-
-        constexpr const char formatStr[]{"%H:%M"};
-
-        strftime(buf30, sizeof(buf30), formatStr, &tm30);
-        strftime(buf60, sizeof(buf60), formatStr, &tm60);
-
-        sprite.setTextDatum(TC_DATUM);
-        sprite.drawString(buf30, sprite.width() - distance, 5, &DejaVu12);
-        sprite.drawString(buf60, sprite.width() - doubleDistance, 5, &DejaVu12);
-    }
+    sprite.setTextDatum(TC_DATUM);
+    sprite.drawString("-30 min", sprite.width() - dist30, 5, &DejaVu12);
+    sprite.drawString("-60 min", sprite.width() - dist60, 5, &DejaVu12);
 }
 
 static void updateCo2History(const int32_t w, const int32_t h, const int32_t x, const int32_t y)
@@ -710,7 +687,7 @@ void displayTask(void *parameter)
     display.setColorDepth(lgfx::rgb565_2Byte);
     display.init();
     display.clear(BACKGROUND_COLOR);
-    display.setBrightness(70);
+    display.setBrightness(100);
     display.setTextWrap(false, false);
     display.setTextScroll(false);
 
